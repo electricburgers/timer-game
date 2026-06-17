@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  TRIVIA HOST TIMER  —  single-file app, no build tools, no dependencies.
+  Built for Chicago Style Trivia (Revolution Entertainment) hosting.
+
+  DEPLOY TO GITHUB PAGES
+  ----------------------
+  1. Put this file in a repo, named exactly: index.html
+  2. Push to the `main` branch.
+  3. On GitHub: Settings -> Pages -> Build and deployment
+       Source:  Deploy from a branch
+       Branch:  main   /  (root)
+  4. Save. Your app will be live at:
+       https://<your-username>.github.io/<repo-name>/
+  (No CDN, no npm. All HTML, CSS, and JS are inline below.)
+
+  NOTE: The Wake Lock API only works over HTTPS (GitHub Pages is HTTPS) or
+  on localhost. It silently no-ops elsewhere; everything else still works.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Trivia Host Timer</title>
+<style>
+  :root{
+    --bg:#0c0e11;
+    --panel:#15191e;
+    --line:#262c33;
+    --text:#f2f4f6;
+    --muted:#8a939c;
+    --btn:#1c2228;
+    --btn-h:#262e36;
+    --btn-border:#333b44;
+    --blue:#4ea3ff;
+    --green:#33d17a;
+    --yellow:#ffce3a;
+    --red:#ff4d4d;
+    --focus:#7cc0ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;
+    line-height:1.3;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    max-width:380px;
+    margin:0 auto;
+    padding:8px 10px 14px;
+  }
+  /* ---- focus visibility (quality floor) ---- */
+  button:focus-visible,input:focus-visible{
+    outline:2px solid var(--focus);
+    outline-offset:1px;
+  }
+
+  /* ---- header ---- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .rownav{display:flex;align-items:center;gap:6px;}
+  .arrow{
+    width:38px;min-height:38px;
+    font-size:18px;font-weight:700;line-height:1;
+    padding:0;
+  }
+  .roundlabel{
+    font-size:17px;font-weight:700;letter-spacing:.3px;
+    min-width:84px;text-align:center;
+  }
+  .roundlabel span{color:var(--blue);}
+  .gameclock{
+    text-align:right;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;line-height:1.15;
+  }
+  .gameclock b{
+    display:block;
+    font-variant-numeric:tabular-nums;
+    font-size:16px;color:var(--text);font-weight:700;letter-spacing:0;
+  }
+  .toplinks{
+    display:flex;justify-content:flex-end;gap:6px;
+    margin-top:6px;
+  }
+  .linkbtn{
+    min-height:30px;padding:3px 10px;
+    font-size:11.5px;color:var(--muted);
+    background:transparent;border:1px solid var(--btn-border);
+  }
+  .linkbtn:hover{color:var(--text);}
+
+  hr.div{
+    border:none;border-top:1px solid var(--line);
+    margin:10px 0;
+  }
+
+  /* ---- generic buttons / inputs ---- */
+  button{
+    background:var(--btn);
+    color:var(--text);
+    border:1px solid var(--btn-border);
+    border-radius:5px;
+    min-height:38px;
+    font-size:13px;font-weight:600;
+    cursor:pointer;
+    padding:6px 8px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button:hover{background:var(--btn-h);}
+  button:active{transform:translateY(1px);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  input[type=number]{
+    background:#0a0c0f;
+    color:var(--text);
+    border:1px solid var(--btn-border);
+    border-radius:5px;
+    min-height:38px;
+    width:100%;
+    font-size:13px;
+    text-align:center;
+    padding:4px;
+    font-variant-numeric:tabular-nums;
+  }
+  input[type=text]{
+    background:#0a0c0f;
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:5px;
+    width:100%;
+    font-size:12px;
+    padding:6px 8px;min-height:30px;
+  }
+  .primary{background:#1f3a57;border-color:#2c5279;}
+  .primary:hover{background:#264662;}
+  .danger{background:#3a1f24;border-color:#5a2e34;}
+  .danger:hover{background:#46262c;}
+
+  /* ---- section labels ---- */
+  .zlabel{
+    font-size:10.5px;text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);margin:0 0 5px;font-weight:700;
+  }
+
+  /* ---- round timer ---- */
+  .bigtime{
+    font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:52px;font-weight:700;line-height:1;
+    text-align:center;letter-spacing:1px;
+    margin:2px 0 8px;
+    color:var(--text);
+  }
+  .bigtime.t-blue{color:var(--blue);}
+  .bigtime.t-green{color:var(--green);}
+  .bigtime.t-yellow{color:var(--yellow);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .qrow{
+    display:grid;grid-template-columns:1fr auto auto;gap:6px;
+    align-items:center;margin-top:6px;
+  }
+  .qcount{
+    text-align:center;font-weight:700;font-size:15px;
+    font-variant-numeric:tabular-nums;
+    padding:0 4px;white-space:nowrap;
+  }
+  .qcount span{color:var(--green);}
+  .plus{min-width:52px;}
+
+  /* ---- question + break displays ---- */
+  .midtime{
+    font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:30px;font-weight:700;line-height:1;text-align:center;
+    margin:0 0 8px;color:var(--text);
+  }
+  .qtime.pulse-yellow{color:var(--yellow);animation:pulse 1s ease-in-out infinite;}
+  .qtime.flash-red{color:var(--red);animation:flash .28s steps(1,end) infinite;}
+  .qtime.solid-red{color:var(--red);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  @keyframes flash{0%,100%{opacity:1;}50%{opacity:.12;}}
+  @media (prefers-reduced-motion:reduce){
+    .qtime.pulse-yellow,.qtime.flash-red{animation:none;}
+  }
+
+  .crow{display:grid;gap:6px;align-items:center;}
+  .crow.q{grid-template-columns:auto 64px 1fr 1fr;}
+  .crow.b{grid-template-columns:64px 1fr 1fr;}
+  .toggle{padding:6px 10px;white-space:nowrap;}
+
+  /* ---- round log ---- */
+  .logwrap{margin-top:4px;}
+  .logitem{
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:6px 8px;
+    margin-bottom:6px;
+    background:var(--panel);
+  }
+  .logline{
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+    font-size:13px;margin-bottom:5px;
+  }
+  .logline .r{font-weight:700;}
+  .logline .tm{font-variant-numeric:tabular-nums;font-weight:700;}
+  .logline .qq{color:var(--muted);font-size:12px;}
+  .badge{
+    margin-left:auto;
+    font-size:11px;font-weight:700;
+    padding:2px 7px;border-radius:99px;white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .b-on{color:var(--green);border-color:#1f5a3a;background:#11281c;}
+  .b-fast{color:var(--red);border-color:#5a2630;background:#2a1418;}
+  .b-slow{color:var(--yellow);border-color:#5a4a1f;background:#2a2410;}
+  .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:8px 0;}
+
+  /* ---- summary ---- */
+  #summary{display:none;}
+  .sumhead{font-size:16px;font-weight:700;margin:2px 0 8px;}
+  .sumtotal{
+    font-variant-numeric:tabular-nums;
+    font-size:30px;font-weight:700;text-align:center;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    margin:2px 0;
+  }
+  .sumtotal small{display:block;font-size:10.5px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:1px;font-weight:700;
+    font-family:inherit;}
+  .sumrow{
+    display:flex;align-items:center;gap:7px;
+    border-top:1px solid var(--line);padding:6px 2px;font-size:13px;
+  }
+  .sumrow .tm{font-variant-numeric:tabular-nums;font-weight:700;}
+  .sumrow .qq{color:var(--muted);font-size:12px;}
+  .sumavg{
+    display:flex;justify-content:space-between;
+    border-top:1px solid var(--line);padding:7px 2px 2px;
+    font-size:13px;color:var(--muted);
+  }
+  .sumavg b{color:var(--text);font-variant-numeric:tabular-nums;}
+  .verdict{
+    margin-top:10px;padding:8px 10px;
+    border:1px solid var(--btn-border);border-radius:5px;
+    background:var(--panel);font-size:13px;text-align:center;
+  }
+  .sumnote{font-size:11px;color:var(--muted);margin-top:5px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ HEADER ============ -->
+  <header>
+    <div class="rownav">
+      <button class="arrow" id="roundPrev" aria-label="Previous round">&larr;</button>
+      <div class="roundlabel">Round <span id="roundNum">1</span></div>
+      <button class="arrow" id="roundNext" aria-label="Next round">&rarr;</button>
+    </div>
+    <div class="gameclock">Game<b id="gameClock">00:00</b></div>
+  </header>
+  <div class="toplinks">
+    <button class="linkbtn" id="summaryBtn">Summary</button>
+    <button class="linkbtn" id="clearBtn">Clear Session</button>
+  </div>
+
+  <!-- ============ TIMER ZONES ============ -->
+  <div id="timers">
+
+    <hr class="div">
+
+    <!-- ROUND TIMER -->
+    <section id="zoneRound">
+      <p class="zlabel">Round Timer</p>
+      <div class="bigtime" id="roundTime">00:00</div>
+      <div class="grid2">
+        <button class="primary" id="runBtn">Start</button>
+        <button id="stopBtn">Stop &amp; Log</button>
+      </div>
+      <div class="qrow">
+        <button id="resetBtn">Reset</button>
+        <div class="qcount">Q: <span id="qCount">0</span></div>
+        <button class="plus" id="qPlus">+1</button>
+      </div>
+    </section>
+
+    <hr class="div">
+
+    <!-- QUESTION COUNTDOWN -->
+    <section id="zoneQuestion">
+      <p class="zlabel">Question Countdown</p>
+      <div class="midtime qtime" id="qTime">03:00</div>
+      <div class="crow q">
+        <button class="toggle" id="qToggle">5:00</button>
+        <input type="number" id="qMin" min="1" max="5" step="1" value="3" aria-label="Question minutes">
+        <button class="primary" id="qStart">Start</button>
+        <button id="qReset">Reset</button>
+      </div>
+    </section>
+
+    <!-- BREAK TIMER (between rounds only) -->
+    <section id="zoneBreak">
+      <hr class="div">
+      <p class="zlabel">Break Timer</p>
+      <div class="midtime" id="bTime">10:00</div>
+      <div class="crow b">
+        <input type="number" id="bMin" min="1" max="60" step="1" value="10" aria-label="Break minutes">
+        <button class="primary" id="bStart">Start Break</button>
+        <button id="bReset">Reset</button>
+      </div>
+    </section>
+
+    <hr class="div">
+
+    <!-- ROUND LOG -->
+    <section>
+      <p class="zlabel">Round Log</p>
+      <div class="logwrap" id="log"></div>
+    </section>
+  </div>
+
+  <!-- ============ SUMMARY PANEL ============ -->
+  <div id="summary"></div>
+
+</div>
+
+<script>
+"use strict";
+
+/* ---------- constants (seconds) ---------- */
+var BLUE_AT   = 900;    // 15:00 -> blue
+var GREEN_AT  = 1200;   // 20:00 -> green / on-pace floor
+var YELLOW_AT = 1800;   // 30:00 -> yellow / on-pace ceiling
+var PACE_LOW  = 1200;   // under 20:00 = Too Fast
+var PACE_HIGH = 1800;   // over 30:00 = Too Slow
+var TOTAL_ROUNDS = 4;
+var LS_KEY = "triviaHostTimer.v1";
+
+/* ---------- persisted state ---------- */
+var state = {
+  displayedRound: 1,
+  roundLog: [],          // {round, sec, questions, pace, notes}
+  questions: 0,
+  roundState: "idle",    // idle | running | paused
+  roundAccumMs: 0,
+  roundAnchor: 0,        // epoch ms when last set running
+  gameComplete: false
+};
+var showSummary = false;
+
+/* ---------- transient (not persisted) ---------- */
+var qDurationSec = 180;
+var qEndEpoch = 0;
+var qState = "idle";     // idle | running | done
+var qFlashTimer = null;
+
+var bDurationSec = 600;
+var bEndEpoch = 0;
+var bState = "idle";     // idle | running
+
+/* ---------- element refs ---------- */
+function $(id){ return document.getElementById(id); }
+var el = {
+  roundNum:$("roundNum"), gameClock:$("gameClock"),
+  summaryBtn:$("summaryBtn"), clearBtn:$("clearBtn"),
+  timers:$("timers"), summary:$("summary"),
+  roundTime:$("roundTime"), runBtn:$("runBtn"), stopBtn:$("stopBtn"),
+  resetBtn:$("resetBtn"), qCount:$("qCount"), qPlus:$("qPlus"),
+  zoneBreak:$("zoneBreak"),
+  qTime:$("qTime"), qToggle:$("qToggle"), qMin:$("qMin"),
+  qStart:$("qStart"), qReset:$("qReset"),
+  bTime:$("bTime"), bMin:$("bMin"), bStart:$("bStart"), bReset:$("bReset"),
+  log:$("log"),
+  roundPrev:$("roundPrev"), roundNext:$("roundNext")
+};
+
+/* ---------- helpers ---------- */
+function fmt(totalSec){
+  totalSec = Math.max(0, Math.floor(totalSec));
+  var m = Math.floor(totalSec/60), s = totalSec%60;
+  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+}
+function elapsedRoundMs(){
+  return state.roundAccumMs +
+    (state.roundState==="running" ? (Date.now()-state.roundAnchor) : 0);
+}
+function roundColorClass(sec){
+  if(sec>=YELLOW_AT) return "t-yellow";
+  if(sec>=GREEN_AT)  return "t-green";
+  if(sec>=BLUE_AT)   return "t-blue";
+  return "";
+}
+function paceFor(sec){
+  if(sec < PACE_LOW)  return "fast";
+  if(sec > PACE_HIGH) return "slow";
+  return "on";
+}
+var BADGE = {
+  on:  {t:"On Pace",  c:"b-on",  e:"\uD83D\uDFE2"},   // green circle
+  fast:{t:"Too Fast", c:"b-fast",e:"\uD83D\uDD34"},   // red circle
+  slow:{t:"Too Slow", c:"b-slow",e:"\uD83D\uDFE1"}    // yellow circle
+};
+function totalLoggedSec(){
+  var t=0; for(var i=0;i<state.roundLog.length;i++) t+=state.roundLog[i].sec; return t;
+}
+function escapeHtml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ---------- persistence ---------- */
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+}
+function load(){
+  try{
+    var raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    var s = JSON.parse(raw);
+    if(s && typeof s==="object"){
+      state.displayedRound = s.displayedRound || 1;
+      state.roundLog = Array.isArray(s.roundLog) ? s.roundLog : [];
+      state.questions = s.questions || 0;
+      state.roundState = s.roundState || "idle";
+      state.roundAccumMs = s.roundAccumMs || 0;
+      state.roundAnchor = s.roundAnchor || 0;
+      state.gameComplete = !!s.gameComplete;
+      // A round running at save time keeps ticking via its epoch anchor.
+      if(state.roundState==="running" && !state.roundAnchor){
+        state.roundState="paused";
+      }
+    }
+  }catch(e){}
+}
+
+/* ============ ROUND TIMER ============ */
+function toggleRun(){
+  if(state.roundState==="idle" || state.roundState==="paused"){
+    state.roundState="running";
+    state.roundAnchor=Date.now();
+  } else { // running -> pause
+    state.roundAccumMs += Date.now()-state.roundAnchor;
+    state.roundState="paused";
+  }
+  save(); renderStructure();
+}
+function stopLog(){
+  var ms = elapsedRoundMs();
+  if(ms < 1000) return; // nothing meaningful to log
+  var sec = Math.round(ms/1000);
+  state.roundLog.push({
+    round: state.displayedRound,
+    sec: sec,
+    questions: state.questions,
+    pace: paceFor(sec),
+    notes: ""
+  });
+  // fresh round
+  state.roundState="idle"; state.roundAccumMs=0; state.roundAnchor=0;
+  state.questions=0;
+  resetQuestion(); resetBreak();
+  if(state.roundLog.length >= TOTAL_ROUNDS){
+    state.gameComplete=true;
+    showSummary=true;
+  } else {
+    state.displayedRound = Math.min(TOTAL_ROUNDS, state.displayedRound+1);
+  }
+  save(); renderStructure();
+}
+function resetRound(){
+  state.roundState="idle"; state.roundAccumMs=0; state.roundAnchor=0;
+  state.questions=0;   // a reset round starts fresh at Q:0
+  save(); renderStructure();
+}
+function stepRound(d){
+  state.displayedRound = Math.min(TOTAL_ROUNDS, Math.max(1, state.displayedRound+d));
+  save(); renderStructure();
+}
+function addQuestion(){
+  if(state.roundState==="idle") return; // only during an active round
+  state.questions++;
+  save(); renderStructure();
+}
+
+/* ============ QUESTION COUNTDOWN ============ */
+function setQClass(phase){
+  el.qTime.className = "midtime qtime" +
+    (phase==="pulse" ? " pulse-yellow" :
+     phase==="flash" ? " flash-red" :
+     phase==="solid" ? " solid-red" : "");
+}
+function startQuestion(){
+  if(qState==="running") return;
+  qEndEpoch = Date.now() + qDurationSec*1000;
+  qState="running";
+  if(qFlashTimer){ clearTimeout(qFlashTimer); qFlashTimer=null; }
+}
+function resetQuestion(){
+  qState="idle"; qEndEpoch=0;
+  if(qFlashTimer){ clearTimeout(qFlashTimer); qFlashTimer=null; }
+  setQClass("normal");
+  el.qTime.textContent = fmt(qDurationSec);
+}
+function questionHitZero(){
+  qState="done"; qEndEpoch=0;
+  el.qTime.textContent = fmt(0);
+  setQClass("flash");                  // ~3.6 flashes/sec via CSS
+  if(qFlashTimer) clearTimeout(qFlashTimer);
+  qFlashTimer = setTimeout(function(){
+    if(qState==="done") setQClass("solid");  // hold solid red
+  }, 3000);
+}
+function setQDuration(sec){
+  sec = Math.min(300, Math.max(60, sec));
+  qDurationSec = sec;
+  el.qMin.value = Math.round(sec/60);
+  el.qToggle.textContent = (sec===180) ? "5:00" : "3:00"; // toggles to the other preset
+  resetQuestion();
+}
+function toggleQuestionPreset(){
+  setQDuration(qDurationSec===180 ? 300 : 180);
+}
+
+/* ============ BREAK TIMER ============ */
+function startBreak(){
+  if(bState==="running") return;
+  bEndEpoch = Date.now() + bDurationSec*1000;
+  bState="running";
+}
+function resetBreak(){
+  bState="idle"; bEndEpoch=0;
+  el.bTime.textContent = fmt(bDurationSec);
+}
+function setBreakDuration(min){
+  min = Math.min(60, Math.max(1, min));
+  bDurationSec = min*60;
+  el.bMin.value = min;
+  resetBreak();
+}
+
+/* ============ CLEAR SESSION ============ */
+function clearSession(){
+  if(!confirm("Clear all rounds and start a new game night?")) return;
+  state = {
+    displayedRound:1, roundLog:[], questions:0,
+    roundState:"idle", roundAccumMs:0, roundAnchor:0, gameComplete:false
+  };
+  showSummary=false;
+  resetQuestion(); resetBreak();
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  renderStructure();
+}
+
+/* ============ RENDER ============ */
+// renderStructure(): visibility, labels, log, summary — on events only.
+function renderStructure(){
+  var summaryView = state.gameComplete || showSummary;
+
+  el.timers.style.display = summaryView ? "none" : "";
+  el.summary.style.display = summaryView ? "block" : "none";
+  el.summaryBtn.textContent = (showSummary && !state.gameComplete) ? "Back to Timers" : "Summary";
+
+  el.roundNum.textContent = state.displayedRound;
+
+  // run button label reflects state
+  el.runBtn.textContent =
+    state.roundState==="running" ? "Pause" :
+    state.roundState==="paused"  ? "Resume" : "Start";
+
+  // stop/reset only meaningful with elapsed time
+  var hasTime = elapsedRoundMs() >= 1000;
+  el.stopBtn.disabled = !hasTime;
+  el.resetBtn.disabled = !hasTime && state.roundState==="idle";
+
+  // question counter only adds during a live round
+  el.qPlus.disabled = state.roundState==="idle";
+  el.qCount.textContent = state.questions;
+
+  // break zone shows only between rounds
+  el.zoneBreak.style.display = (state.roundState==="idle") ? "" : "none";
+
+  if(summaryView) buildSummary(); else buildLog();
+}
+
+function buildLog(){
+  var L = state.roundLog;
+  if(L.length===0){
+    el.log.innerHTML = '<div class="empty">No rounds logged yet.</div>';
+    return;
+  }
+  var html="";
+  for(var i=0;i<L.length;i++){
+    var e=L[i], b=BADGE[e.pace];
+    html +=
+      '<div class="logitem">'+
+        '<div class="logline">'+
+          '<span class="r">R'+e.round+'</span>'+
+          '<span class="tm">'+fmt(e.sec)+'</span>'+
+          '<span class="qq">'+e.questions+'Q</span>'+
+          '<span class="badge '+b.c+'">'+b.e+' '+b.t+'</span>'+
+        '</div>'+
+        '<input type="text" data-i="'+i+'" placeholder="notes (e.g. beer round)\u2026" '+
+          'value="'+escapeHtml(e.notes)+'">'+
+      '</div>';
+  }
+  el.log.innerHTML = html;
+}
+
+function buildSummary(){
+  var L = state.roundLog;
+  var n = L.length;
+  var total = totalLoggedSec();
+  var onPace = 0;
+  for(var i=0;i<n;i++) if(L[i].pace==="on") onPace++;
+  var avg = n ? Math.round(total/n) : 0;
+
+  var verdict;
+  if(n===0) verdict="No rounds logged yet.";
+  else if(onPace===n) verdict="All "+n+" rounds on pace \u2014 great night!";
+  else if(onPace>=n-1) verdict=onPace+" of "+n+" rounds on pace \u2014 good night.";
+  else if(onPace>=Math.ceil(n/2)) verdict=onPace+" of "+n+" rounds on pace \u2014 decent night.";
+  else verdict=onPace+" of "+n+" rounds on pace \u2014 watch your pacing.";
+
+  var rows="";
+  for(i=0;i<n;i++){
+    var e=L[i], b=BADGE[e.pace];
+    rows +=
+      '<div class="sumrow">'+
+        '<span class="r">R'+e.round+'</span>'+
+        '<span class="tm">'+fmt(e.sec)+'</span>'+
+        '<span class="qq">'+e.questions+'Q</span>'+
+        '<span class="badge '+b.c+'">'+b.e+' '+b.t+'</span>'+
+      '</div>';
+  }
+
+  var foot = state.gameComplete
+    ? '<button class="danger" id="newGameBtn" style="width:100%;margin-top:12px;">Start New Game</button>'
+    : '<button id="backBtn" style="width:100%;margin-top:12px;">Back to Timers</button>'+
+      '<div class="sumnote">Game in progress \u2014 summary so far.</div>';
+
+  el.summary.innerHTML =
+    '<div class="sumhead">'+(state.gameComplete?"Game Complete":"Session Summary")+'</div>'+
+    '<div class="sumtotal">'+fmt(total)+'<small>Total Game Time</small></div>'+
+    (n? rows : '<div class="empty">No rounds logged yet.</div>')+
+    (n? '<div class="sumavg"><span>Average round</span><b>'+fmt(avg)+'</b></div>' : '')+
+    '<div class="verdict">'+verdict+'</div>'+
+    foot;
+
+  var ng=$("newGameBtn"); if(ng) ng.onclick=clearSession;
+  var bk=$("backBtn"); if(bk) bk.onclick=function(){ showSummary=false; renderStructure(); };
+}
+
+// tick(): lightweight numeric refresh, runs continuously.
+function tick(){
+  var rSec = elapsedRoundMs()/1000;
+  el.roundTime.textContent = fmt(rSec);
+  el.roundTime.className = "bigtime " + roundColorClass(rSec);
+  el.gameClock.textContent = fmt(totalLoggedSec());
+
+  // toggle stop/reset enabled as time crosses 1s (cheap)
+  var hasTime = rSec >= 1;
+  if(el.stopBtn.disabled === hasTime) el.stopBtn.disabled = !hasTime;
+
+  if(qState==="running"){
+    var qrem = Math.ceil((qEndEpoch - Date.now())/1000);
+    if(qrem<=0){
+      questionHitZero();
+    } else {
+      el.qTime.textContent = fmt(qrem);
+      setQClass(qrem<=60 ? "pulse" : "normal");
+    }
+  }
+  if(bState==="running"){
+    var brem = Math.ceil((bEndEpoch - Date.now())/1000);
+    if(brem<=0){ bState="idle"; bEndEpoch=0; el.bTime.textContent = fmt(0); }
+    else el.bTime.textContent = fmt(brem);
+  }
+}
+
+/* ============ WAKE LOCK ============ */
+var wakeLock = null;
+function requestWakeLock(){
+  if(!("wakeLock" in navigator)) return;
+  navigator.wakeLock.request("screen").then(function(lock){
+    wakeLock = lock;
+    lock.addEventListener("release", function(){ wakeLock=null; });
+  }).catch(function(){ /* silent — e.g. tab not visible */ });
+}
+document.addEventListener("visibilitychange", function(){
+  if(wakeLock===null && document.visibilityState==="visible") requestWakeLock();
+});
+
+/* ============ WIRE UP ============ */
+el.runBtn.onclick   = toggleRun;
+el.stopBtn.onclick  = stopLog;
+el.resetBtn.onclick = resetRound;
+el.qPlus.onclick    = addQuestion;
+el.roundPrev.onclick= function(){ stepRound(-1); };
+el.roundNext.onclick= function(){ stepRound(1); };
+el.summaryBtn.onclick = function(){ showSummary=!showSummary; renderStructure(); };
+el.clearBtn.onclick = clearSession;
+
+el.qStart.onclick = startQuestion;
+el.qReset.onclick = resetQuestion;
+el.qToggle.onclick= toggleQuestionPreset;
+el.qMin.onchange  = function(){ setQDuration((parseInt(el.qMin.value,10)||3)*60); };
+
+el.bStart.onclick = startBreak;
+el.bReset.onclick = resetBreak;
+el.bMin.onchange  = function(){ setBreakDuration(parseInt(el.bMin.value,10)||10); };
+
+// notes editing via delegation (keeps input focus, no rebuild)
+el.log.addEventListener("input", function(ev){
+  var t = ev.target;
+  if(t && t.tagName==="INPUT" && t.dataset.i!=null){
+    var i = parseInt(t.dataset.i,10);
+    if(state.roundLog[i]){ state.roundLog[i].notes = t.value; save(); }
+  }
+});
+
+/* ============ INIT ============ */
+load();
+el.qMin.value = Math.round(qDurationSec/60);
+el.qToggle.textContent = (qDurationSec===180) ? "5:00" : "3:00";
+resetQuestion();
+resetBreak();
+renderStructure();
+requestWakeLock();
+setInterval(tick, 200);
+tick();
+</script>
+</body>
+</html>
