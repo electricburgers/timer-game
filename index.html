@@ -23,10 +23,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="light dark">
 <title>Trivia Host Timer</title>
 <style>
   :root{
+    color-scheme:dark;
     --bg:#0c0e11;
     --panel:#15191e;
     --line:#262c33;
@@ -40,6 +41,38 @@
     --yellow:#ffce3a;
     --red:#ff4d4d;
     --focus:#7cc0ff;
+    --input-bg:#0a0c0f;
+    --primary-bg:#1f3a57;
+    --primary-border:#2c5279;
+    --primary-h:#264662;
+    --danger-bg:#3a1f24;
+    --danger-border:#5a2e34;
+    --danger-h:#46262c;
+    --fs:1;            /* text-size scale, driven by the settings slider */
+  }
+  /* ---- LIGHT MODE ---- */
+  body.light{
+    color-scheme:light;
+    --bg:#eef1f5;
+    --panel:#ffffff;
+    --line:#d6dce3;
+    --text:#161b21;
+    --muted:#5c6670;
+    --btn:#ffffff;
+    --btn-h:#eceff3;
+    --btn-border:#c2cad3;
+    --blue:#1463c9;
+    --green:#138a4a;
+    --yellow:#9a6b00;
+    --red:#cf2b2b;
+    --focus:#1463c9;
+    --input-bg:#f4f6f8;
+    --primary-bg:#1463c9;
+    --primary-border:#1257ad;
+    --primary-h:#1257ad;
+    --danger-bg:#fbeaea;
+    --danger-border:#e3b4b4;
+    --danger-h:#f5dada;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -47,7 +80,7 @@
     background:var(--bg);
     color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    font-size:14px;
+    font-size:calc(14px * var(--fs));
     line-height:1.3;
     -webkit-font-smoothing:antialiased;
   }
@@ -66,28 +99,28 @@
   header{
     display:flex;
     align-items:center;
-    justify-content:space-between;
     gap:8px;
   }
   .rownav{display:flex;align-items:center;gap:6px;}
   .arrow{
     width:38px;min-height:38px;
-    font-size:18px;font-weight:700;line-height:1;
+    font-size:calc(18px * var(--fs));font-weight:700;line-height:1;
     padding:0;
   }
   .roundlabel{
-    font-size:17px;font-weight:700;letter-spacing:.3px;
+    font-size:calc(17px * var(--fs));font-weight:700;letter-spacing:.3px;
     min-width:84px;text-align:center;
   }
   .roundlabel span{color:var(--blue);}
   .gameclock{
-    text-align:right;font-size:11px;color:var(--muted);
+    margin-left:auto;
+    text-align:right;font-size:calc(11px * var(--fs));color:var(--muted);
     text-transform:uppercase;letter-spacing:.6px;line-height:1.15;
   }
   .gameclock b{
     display:block;
     font-variant-numeric:tabular-nums;
-    font-size:16px;color:var(--text);font-weight:700;letter-spacing:0;
+    font-size:calc(16px * var(--fs));color:var(--text);font-weight:700;letter-spacing:0;
   }
   .toplinks{
     display:flex;justify-content:flex-end;gap:6px;
@@ -95,10 +128,20 @@
   }
   .linkbtn{
     min-height:30px;padding:3px 10px;
-    font-size:11.5px;color:var(--muted);
+    font-size:calc(11.5px * var(--fs));color:var(--muted);
     background:transparent;border:1px solid var(--btn-border);
   }
   .linkbtn:hover{color:var(--text);}
+
+  /* ---- gear / icon buttons ---- */
+  .iconbtn{
+    width:38px;min-height:38px;padding:0;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:1px solid var(--btn-border);
+    color:var(--text);
+  }
+  .iconbtn:hover{background:var(--btn-h);}
+  .iconbtn svg{width:21px;height:21px;display:block;}
 
   hr.div{
     border:none;border-top:1px solid var(--line);
@@ -112,7 +155,7 @@
     border:1px solid var(--btn-border);
     border-radius:5px;
     min-height:38px;
-    font-size:13px;font-weight:600;
+    font-size:calc(13px * var(--fs));font-weight:600;
     cursor:pointer;
     padding:6px 8px;
     -webkit-tap-highlight-color:transparent;
@@ -121,34 +164,35 @@
   button:active{transform:translateY(1px);}
   button:disabled{opacity:.4;cursor:not-allowed;}
   input[type=number]{
-    background:#0a0c0f;
+    background:var(--input-bg);
     color:var(--text);
     border:1px solid var(--btn-border);
     border-radius:5px;
     min-height:38px;
     width:100%;
-    font-size:13px;
+    font-size:calc(13px * var(--fs));
     text-align:center;
     padding:4px;
     font-variant-numeric:tabular-nums;
   }
   input[type=text]{
-    background:#0a0c0f;
+    background:var(--input-bg);
     color:var(--text);
     border:1px solid var(--line);
     border-radius:5px;
     width:100%;
-    font-size:12px;
+    font-size:calc(12px * var(--fs));
     padding:6px 8px;min-height:30px;
   }
-  .primary{background:#1f3a57;border-color:#2c5279;}
-  .primary:hover{background:#264662;}
-  .danger{background:#3a1f24;border-color:#5a2e34;}
-  .danger:hover{background:#46262c;}
+  input[type=range]{accent-color:var(--blue);width:100%;}
+  .primary{background:var(--primary-bg);border-color:var(--primary-border);color:#fff;}
+  .primary:hover{background:var(--primary-h);}
+  .danger{background:var(--danger-bg);border-color:var(--danger-border);}
+  .danger:hover{background:var(--danger-h);}
 
   /* ---- section labels ---- */
   .zlabel{
-    font-size:10.5px;text-transform:uppercase;letter-spacing:1px;
+    font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
     color:var(--muted);margin:0 0 5px;font-weight:700;
   }
 
@@ -156,7 +200,7 @@
   .bigtime{
     font-variant-numeric:tabular-nums;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:52px;font-weight:700;line-height:1;
+    font-size:calc(52px * var(--fs));font-weight:700;line-height:1;
     text-align:center;letter-spacing:1px;
     margin:2px 0 8px;
     color:var(--text);
@@ -171,7 +215,7 @@
     align-items:center;margin-top:6px;
   }
   .qcount{
-    text-align:center;font-weight:700;font-size:15px;
+    text-align:center;font-weight:700;font-size:calc(15px * var(--fs));
     font-variant-numeric:tabular-nums;
     padding:0 4px;white-space:nowrap;
   }
@@ -182,16 +226,37 @@
   .midtime{
     font-variant-numeric:tabular-nums;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:30px;font-weight:700;line-height:1;text-align:center;
+    font-size:calc(30px * var(--fs));font-weight:700;line-height:1;text-align:center;
     margin:0 0 8px;color:var(--text);
   }
-  .qtime.pulse-yellow{color:var(--yellow);animation:pulse 1s ease-in-out infinite;}
-  .qtime.flash-red{color:var(--red);animation:flash .28s steps(1,end) infinite;}
-  .qtime.solid-red{color:var(--red);}
-  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
-  @keyframes flash{0%,100%{opacity:1;}50%{opacity:.12;}}
+  /* ---- question countdown states ----
+     No blinking: the NUMBER stays solid; the BACKGROUND pulses.
+       .warn  -> 1-minute warning, pulsing yellow
+       .over  -> overflow (negative time), pulsing red                       */
+  .qtime{
+    border-radius:10px;
+    padding:6px 4px;
+    transition:background-color .25s ease;
+  }
+  .qtime.warn{
+    color:#241c00;
+    animation:pulseWarn 1s ease-in-out infinite;
+  }
+  .qtime.over{
+    color:#ffffff;
+    animation:pulseOver .9s ease-in-out infinite;
+  }
+  @keyframes pulseWarn{
+    0%,100%{background-color:#b8901e;}
+    50%{background-color:#ffd24a;}
+  }
+  @keyframes pulseOver{
+    0%,100%{background-color:#7a1f1f;}
+    50%{background-color:#ff4d4d;}
+  }
   @media (prefers-reduced-motion:reduce){
-    .qtime.pulse-yellow,.qtime.flash-red{animation:none;}
+    .qtime.warn{animation:none;background-color:#ffd24a;}
+    .qtime.over{animation:none;background-color:#ff4d4d;}
   }
 
   .crow{display:grid;gap:6px;align-items:center;}
@@ -210,52 +275,95 @@
   }
   .logline{
     display:flex;align-items:center;gap:7px;flex-wrap:wrap;
-    font-size:13px;margin-bottom:5px;
+    font-size:calc(13px * var(--fs));margin-bottom:5px;
   }
   .logline .r{font-weight:700;}
   .logline .tm{font-variant-numeric:tabular-nums;font-weight:700;}
-  .logline .qq{color:var(--muted);font-size:12px;}
+  .logline .qq{color:var(--muted);font-size:calc(12px * var(--fs));}
   .badge{
     margin-left:auto;
-    font-size:11px;font-weight:700;
+    font-size:calc(11px * var(--fs));font-weight:700;
     padding:2px 7px;border-radius:99px;white-space:nowrap;
     border:1px solid transparent;
   }
   .b-on{color:var(--green);border-color:#1f5a3a;background:#11281c;}
   .b-fast{color:var(--red);border-color:#5a2630;background:#2a1418;}
   .b-slow{color:var(--yellow);border-color:#5a4a1f;background:#2a2410;}
-  .empty{color:var(--muted);font-size:12.5px;text-align:center;padding:8px 0;}
+  body.light .b-on{color:#138a4a;border-color:#a9d9bd;background:#e6f5ec;}
+  body.light .b-fast{color:#cf2b2b;border-color:#e6b3b3;background:#fbe9e9;}
+  body.light .b-slow{color:#9a6b00;border-color:#e0cf9a;background:#f7f0d8;}
+  .empty{color:var(--muted);font-size:calc(12.5px * var(--fs));text-align:center;padding:8px 0;}
 
   /* ---- summary ---- */
   #summary{display:none;}
-  .sumhead{font-size:16px;font-weight:700;margin:2px 0 8px;}
+  .sumhead{font-size:calc(16px * var(--fs));font-weight:700;margin:2px 0 8px;}
   .sumtotal{
     font-variant-numeric:tabular-nums;
-    font-size:30px;font-weight:700;text-align:center;
+    font-size:calc(30px * var(--fs));font-weight:700;text-align:center;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     margin:2px 0;
   }
-  .sumtotal small{display:block;font-size:10.5px;color:var(--muted);
+  .sumtotal small{display:block;font-size:calc(10.5px * var(--fs));color:var(--muted);
     text-transform:uppercase;letter-spacing:1px;font-weight:700;
     font-family:inherit;}
   .sumrow{
     display:flex;align-items:center;gap:7px;
-    border-top:1px solid var(--line);padding:6px 2px;font-size:13px;
+    border-top:1px solid var(--line);padding:6px 2px;font-size:calc(13px * var(--fs));
   }
   .sumrow .tm{font-variant-numeric:tabular-nums;font-weight:700;}
-  .sumrow .qq{color:var(--muted);font-size:12px;}
+  .sumrow .qq{color:var(--muted);font-size:calc(12px * var(--fs));}
   .sumavg{
     display:flex;justify-content:space-between;
     border-top:1px solid var(--line);padding:7px 2px 2px;
-    font-size:13px;color:var(--muted);
+    font-size:calc(13px * var(--fs));color:var(--muted);
   }
   .sumavg b{color:var(--text);font-variant-numeric:tabular-nums;}
   .verdict{
     margin-top:10px;padding:8px 10px;
     border:1px solid var(--btn-border);border-radius:5px;
-    background:var(--panel);font-size:13px;text-align:center;
+    background:var(--panel);font-size:calc(13px * var(--fs));text-align:center;
   }
-  .sumnote{font-size:11px;color:var(--muted);margin-top:5px;}
+  .sumnote{font-size:calc(11px * var(--fs));color:var(--muted);margin-top:5px;}
+
+  /* ---- settings modal ---- */
+  .modal-back{
+    position:fixed;inset:0;z-index:50;
+    background:rgba(0,0,0,.55);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:max(24px,env(safe-area-inset-top)) 14px 14px;
+  }
+  .modal-back.open{display:flex;}
+  .modal{
+    width:100%;max-width:340px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 14px 16px;
+    box-shadow:0 14px 40px rgba(0,0,0,.4);
+  }
+  .modalhead{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .modaltitle{font-size:calc(16px * var(--fs));font-weight:700;}
+  .setrow{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 0;border-top:1px solid var(--line);
+  }
+  .setrow.col{flex-direction:column;align-items:stretch;gap:8px;}
+  .setlabel{
+    font-size:calc(12.5px * var(--fs));font-weight:700;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .setlabel small{color:var(--muted);font-weight:600;}
+  .setsub{font-size:calc(10.5px * var(--fs));color:var(--muted);font-weight:600;margin-top:2px;}
+  #themeToggle{min-width:104px;}
+  .setmini{
+    display:flex;align-items:center;justify-content:space-between;
+    color:var(--muted);font-weight:700;line-height:1;padding:0 2px;
+  }
+  .setmini .s{font-size:calc(12px * var(--fs));}
+  .setmini .l{font-size:calc(20px * var(--fs));}
 </style>
 </head>
 <body>
@@ -269,6 +377,13 @@
       <button class="arrow" id="roundNext" aria-label="Next round">&rarr;</button>
     </div>
     <div class="gameclock">Game<b id="gameClock">00:00</b></div>
+    <button class="iconbtn" id="gear" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
   </header>
   <div class="toplinks">
     <button class="linkbtn" id="summaryBtn">Summary</button>
@@ -335,6 +450,36 @@
 
 </div>
 
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-back" id="settingsBack" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal">
+    <div class="modalhead">
+      <span class="modaltitle">Settings</span>
+      <button class="iconbtn" id="settingsClose" aria-label="Close settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div class="setrow">
+      <div>
+        <div class="setlabel">Appearance</div>
+        <div class="setsub">Tap to switch theme</div>
+      </div>
+      <button id="themeToggle">Dark</button>
+    </div>
+
+    <div class="setrow col">
+      <div class="setlabel">Text size <small id="fsVal">100%</small></div>
+      <input type="range" id="fsRange" min="0.8" max="1.4" step="0.05" value="1" aria-label="Text size">
+      <div class="setmini"><span class="s">A</span><span class="l">A</span></div>
+      <button id="fsReset">Reset text size</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -346,6 +491,7 @@ var PACE_LOW  = 1200;   // under 20:00 = Too Fast
 var PACE_HIGH = 1800;   // over 30:00 = Too Slow
 var TOTAL_ROUNDS = 4;
 var LS_KEY = "triviaHostTimer.v1";
+var SET_KEY = "triviaHostTimer.settings.v1";
 
 /* ---------- persisted state ---------- */
 var state = {
@@ -359,11 +505,13 @@ var state = {
 };
 var showSummary = false;
 
+/* ---------- settings (persisted separately) ---------- */
+var settings = { light:false, fs:1 };
+
 /* ---------- transient (not persisted) ---------- */
 var qDurationSec = 180;
 var qEndEpoch = 0;
-var qState = "idle";     // idle | running | done
-var qFlashTimer = null;
+var qState = "idle";     // idle | running   (now runs straight into overflow)
 
 var bDurationSec = 600;
 var bEndEpoch = 0;
@@ -382,7 +530,10 @@ var el = {
   qStart:$("qStart"), qReset:$("qReset"),
   bTime:$("bTime"), bMin:$("bMin"), bStart:$("bStart"), bReset:$("bReset"),
   log:$("log"),
-  roundPrev:$("roundPrev"), roundNext:$("roundNext")
+  roundPrev:$("roundPrev"), roundNext:$("roundNext"),
+  // settings
+  gear:$("gear"), settingsBack:$("settingsBack"), settingsClose:$("settingsClose"),
+  themeToggle:$("themeToggle"), fsRange:$("fsRange"), fsVal:$("fsVal"), fsReset:$("fsReset")
 };
 
 /* ---------- helpers ---------- */
@@ -444,6 +595,38 @@ function load(){
   }catch(e){}
 }
 
+/* ============ SETTINGS ============ */
+function applyTheme(light){
+  document.body.classList.toggle("light", !!light);
+  el.themeToggle.textContent = light ? "\u2600\uFE0F Light" : "\uD83C\uDF19 Dark";
+}
+function applyFs(fs){
+  fs = Math.min(1.4, Math.max(0.8, fs || 1));
+  document.documentElement.style.setProperty("--fs", String(fs));
+  el.fsRange.value = String(fs);
+  el.fsVal.textContent = Math.round(fs*100) + "%";
+  return fs;
+}
+function saveSettings(){
+  try{ localStorage.setItem(SET_KEY, JSON.stringify(settings)); }catch(e){}
+}
+function loadSettings(){
+  try{
+    var raw = localStorage.getItem(SET_KEY);
+    if(raw){
+      var s = JSON.parse(raw);
+      if(s && typeof s==="object"){
+        settings.light = !!s.light;
+        settings.fs = (typeof s.fs==="number") ? s.fs : 1;
+      }
+    }
+  }catch(e){}
+  applyTheme(settings.light);
+  settings.fs = applyFs(settings.fs);
+}
+function openSettings(){ el.settingsBack.classList.add("open"); }
+function closeSettings(){ el.settingsBack.classList.remove("open"); }
+
 /* ============ ROUND TIMER ============ */
 function toggleRun(){
   if(state.roundState==="idle" || state.roundState==="paused"){
@@ -494,32 +677,24 @@ function addQuestion(){
 }
 
 /* ============ QUESTION COUNTDOWN ============ */
+/* States the display can be in:
+     "normal" -> plain number, no background
+     "warn"   -> 1:00 or less remaining: solid number, pulsing YELLOW background
+     "over"   -> time's up & overflowing into negative: solid number, pulsing RED background */
 function setQClass(phase){
   el.qTime.className = "midtime qtime" +
-    (phase==="pulse" ? " pulse-yellow" :
-     phase==="flash" ? " flash-red" :
-     phase==="solid" ? " solid-red" : "");
+    (phase==="warn" ? " warn" :
+     phase==="over" ? " over" : "");
 }
 function startQuestion(){
   if(qState==="running") return;
   qEndEpoch = Date.now() + qDurationSec*1000;
   qState="running";
-  if(qFlashTimer){ clearTimeout(qFlashTimer); qFlashTimer=null; }
 }
 function resetQuestion(){
   qState="idle"; qEndEpoch=0;
-  if(qFlashTimer){ clearTimeout(qFlashTimer); qFlashTimer=null; }
   setQClass("normal");
   el.qTime.textContent = fmt(qDurationSec);
-}
-function questionHitZero(){
-  qState="done"; qEndEpoch=0;
-  el.qTime.textContent = fmt(0);
-  setQClass("flash");                  // ~3.6 flashes/sec via CSS
-  if(qFlashTimer) clearTimeout(qFlashTimer);
-  qFlashTimer = setTimeout(function(){
-    if(qState==="done") setQClass("solid");  // hold solid red
-  }, 3000);
 }
 function setQDuration(sec){
   sec = Math.min(300, Math.max(60, sec));
@@ -674,11 +849,19 @@ function tick(){
 
   if(qState==="running"){
     var qrem = Math.ceil((qEndEpoch - Date.now())/1000);
-    if(qrem<=0){
-      questionHitZero();
-    } else {
+    if(qrem > 60){
+      // plenty of time left
       el.qTime.textContent = fmt(qrem);
-      setQClass(qrem<=60 ? "pulse" : "normal");
+      setQClass("normal");
+    } else if(qrem > 0){
+      // one-minute warning -> pulsing yellow background
+      el.qTime.textContent = fmt(qrem);
+      setQClass("warn");
+    } else {
+      // time's up: keep counting into the negative (host is slow sometimes!)
+      // pulsing red background; number stays solid (no blinking)
+      el.qTime.textContent = (qrem===0 ? "" : "-") + fmt(-qrem);
+      setQClass("over");
     }
   }
   if(bState==="running"){
@@ -720,6 +903,29 @@ el.bStart.onclick = startBreak;
 el.bReset.onclick = resetBreak;
 el.bMin.onchange  = function(){ setBreakDuration(parseInt(el.bMin.value,10)||10); };
 
+// settings
+el.gear.onclick = openSettings;
+el.settingsClose.onclick = closeSettings;
+el.settingsBack.addEventListener("click", function(ev){
+  if(ev.target===el.settingsBack) closeSettings();   // click outside the card
+});
+document.addEventListener("keydown", function(ev){
+  if(ev.key==="Escape") closeSettings();
+});
+el.themeToggle.onclick = function(){
+  settings.light = !settings.light;
+  applyTheme(settings.light);
+  saveSettings();
+};
+el.fsRange.oninput = function(){
+  settings.fs = applyFs(parseFloat(el.fsRange.value));
+  saveSettings();
+};
+el.fsReset.onclick = function(){
+  settings.fs = applyFs(1);
+  saveSettings();
+};
+
 // notes editing via delegation (keeps input focus, no rebuild)
 el.log.addEventListener("input", function(ev){
   var t = ev.target;
@@ -730,6 +936,7 @@ el.log.addEventListener("input", function(ev){
 });
 
 /* ============ INIT ============ */
+loadSettings();
 load();
 el.qMin.value = Math.round(qDurationSec/60);
 el.qToggle.textContent = (qDurationSec===180) ? "5:00" : "3:00";
