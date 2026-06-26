@@ -3,6 +3,7 @@
   ============================================================================
   TRIVIA HOST TIMER  —  single-file app, no build tools, no dependencies.
   Built for Chicago Style Trivia (Revolution Entertainment) hosting.
+  v2.0
 
   DEPLOY TO GITHUB PAGES
   ----------------------
@@ -24,7 +25,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Trivia Host Timer</title>
+<title>Trivia Host Timer v2.0</title>
 <style>
   :root{
     color-scheme:dark;
@@ -99,29 +100,24 @@
   header{
     display:flex;
     align-items:center;
+    justify-content:space-between;
     gap:8px;
   }
-  .rownav{display:flex;align-items:center;gap:6px;}
-  .arrow{
-    width:38px;min-height:38px;
-    font-size:calc(18px * var(--fs));font-weight:700;line-height:1;
-    padding:0;
+  .apptitle{
+    font-size:calc(16px * var(--fs));font-weight:700;letter-spacing:.2px;
   }
-  .roundlabel{
-    font-size:calc(17px * var(--fs));font-weight:700;letter-spacing:.3px;
-    min-width:84px;text-align:center;
+  /* ---- two-timer pair (current round + session) ---- */
+  .timepair{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    align-items:end;margin:2px 0 10px;
   }
-  .roundlabel span{color:var(--blue);}
-  .gameclock{
-    margin-left:auto;
-    text-align:right;font-size:calc(11px * var(--fs));color:var(--muted);
-    text-transform:uppercase;letter-spacing:.6px;line-height:1.15;
+  .tcol{text-align:center;min-width:0;}
+  .tlabel{
+    font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);font-weight:700;margin-bottom:3px;
   }
-  .gameclock b{
-    display:block;
-    font-variant-numeric:tabular-nums;
-    font-size:calc(16px * var(--fs));color:var(--text);font-weight:700;letter-spacing:0;
-  }
+  .timepair .bigtime{font-size:calc(36px * var(--fs));margin:0;}
+  .timepair .bigtime.sess{color:var(--muted);}
   .toplinks{
     display:flex;justify-content:flex-end;gap:6px;
     margin-top:6px;
@@ -159,9 +155,14 @@
     cursor:pointer;
     padding:6px 8px;
     -webkit-tap-highlight-color:transparent;
+    transition:background 0.12s, border-color 0.12s, color 0.12s,
+               transform 0.08s ease, filter 0.08s ease;
   }
   button:hover{background:var(--btn-h);}
-  button:active{transform:translateY(1px);}
+  button:active:not(:disabled){
+    transform:translateY(2px) scale(0.95);
+    filter:brightness(0.78);
+  }
   button:disabled{opacity:.4;cursor:not-allowed;}
   input[type=number]{
     background:var(--input-bg);
@@ -190,6 +191,26 @@
   .danger{background:var(--danger-bg);border-color:var(--danger-border);}
   .danger:hover{background:var(--danger-h);}
 
+  /* ---- Pause state (timer is running): bold amber, clearly != blue ---- */
+  .btn-pause,
+  body.light .btn-pause{
+    background:#f59e0b;
+    border-color:#b9730a;
+    color:#1a1100;
+  }
+  .btn-pause:hover,
+  body.light .btn-pause:hover{background:#fbb024;}
+
+  /* ---- Reset active state: red in both themes ---- */
+  .btn-reset-active,
+  body.light .btn-reset-active{
+    background:var(--danger-bg);
+    border-color:var(--danger-border);
+    color:var(--red);
+  }
+  .btn-reset-active:hover,
+  body.light .btn-reset-active:hover{background:var(--danger-h);}
+
   /* ---- section labels ---- */
   .zlabel{
     font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
@@ -210,17 +231,6 @@
   .bigtime.t-yellow{color:var(--yellow);}
 
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-  .qrow{
-    display:grid;grid-template-columns:1fr auto auto;gap:6px;
-    align-items:center;margin-top:6px;
-  }
-  .qcount{
-    text-align:center;font-weight:700;font-size:calc(15px * var(--fs));
-    font-variant-numeric:tabular-nums;
-    padding:0 4px;white-space:nowrap;
-  }
-  .qcount span{color:var(--green);}
-  .plus{min-width:52px;}
 
   /* ---- question + break displays ---- */
   .midtime{
@@ -279,7 +289,6 @@
   }
   .logline .r{font-weight:700;}
   .logline .tm{font-variant-numeric:tabular-nums;font-weight:700;}
-  .logline .qq{color:var(--muted);font-size:calc(12px * var(--fs));}
   .badge{
     margin-left:auto;
     font-size:calc(11px * var(--fs));font-weight:700;
@@ -311,7 +320,6 @@
     border-top:1px solid var(--line);padding:6px 2px;font-size:calc(13px * var(--fs));
   }
   .sumrow .tm{font-variant-numeric:tabular-nums;font-weight:700;}
-  .sumrow .qq{color:var(--muted);font-size:calc(12px * var(--fs));}
   .sumavg{
     display:flex;justify-content:space-between;
     border-top:1px solid var(--line);padding:7px 2px 2px;
@@ -357,13 +365,40 @@
   }
   .setlabel small{color:var(--muted);font-weight:600;}
   .setsub{font-size:calc(10.5px * var(--fs));color:var(--muted);font-weight:600;margin-top:2px;}
-  #themeToggle{min-width:104px;}
   .setmini{
     display:flex;align-items:center;justify-content:space-between;
     color:var(--muted);font-weight:700;line-height:1;padding:0 2px;
   }
   .setmini .s{font-size:calc(12px * var(--fs));}
   .setmini .l{font-size:calc(20px * var(--fs));}
+  .setver{
+    text-align:center;padding-top:12px;
+    font-size:calc(10.5px * var(--fs));color:var(--muted);letter-spacing:.4px;
+  }
+
+  /* ---- toggle switch (light/dark) ---- */
+  .sw-label{display:inline-flex;align-items:center;cursor:pointer;}
+  .sw-label input{position:absolute;opacity:0;width:0;height:0;}
+  .sw-track{
+    width:46px;height:26px;
+    background:var(--btn-border);
+    border-radius:13px;
+    position:relative;
+    transition:background 0.2s;
+    flex-shrink:0;
+  }
+  .sw-label input:checked ~ .sw-track{background:var(--blue);}
+  .sw-thumb{
+    position:absolute;
+    top:3px;left:3px;
+    width:20px;height:20px;
+    background:#fff;
+    border-radius:50%;
+    transition:transform 0.2s;
+    box-shadow:0 1px 4px rgba(0,0,0,.35);
+  }
+  .sw-label input:checked ~ .sw-track .sw-thumb{transform:translateX(20px);}
+  .sw-label:focus-within .sw-track{outline:2px solid var(--focus);outline-offset:2px;}
 </style>
 </head>
 <body>
@@ -371,12 +406,7 @@
 
   <!-- ============ HEADER ============ -->
   <header>
-    <div class="rownav">
-      <button class="arrow" id="roundPrev" aria-label="Previous round">&larr;</button>
-      <div class="roundlabel">Round <span id="roundNum">1</span></div>
-      <button class="arrow" id="roundNext" aria-label="Next round">&rarr;</button>
-    </div>
-    <div class="gameclock">Game<b id="gameClock">00:00</b></div>
+    <div class="apptitle">Trivia Timer</div>
     <button class="iconbtn" id="gear" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -397,17 +427,21 @@
 
     <!-- ROUND TIMER -->
     <section id="zoneRound">
-      <p class="zlabel">Round Timer</p>
-      <div class="bigtime" id="roundTime">00:00</div>
+      <div class="timepair">
+        <div class="tcol">
+          <div class="tlabel">Current Round</div>
+          <div class="bigtime" id="roundTime">00:00</div>
+        </div>
+        <div class="tcol">
+          <div class="tlabel">Session</div>
+          <div class="bigtime sess" id="gameTime">00:00</div>
+        </div>
+      </div>
       <div class="grid2">
         <button class="primary" id="runBtn">Start</button>
-        <button id="stopBtn">Stop &amp; Log</button>
+        <button id="stopBtn">End Round &amp; Log</button>
       </div>
-      <div class="qrow">
-        <button id="resetBtn">Reset</button>
-        <div class="qcount">Q: <span id="qCount">0</span></div>
-        <button class="plus" id="qPlus">+1</button>
-      </div>
+      <button id="resetBtn" style="width:100%;margin-top:6px;">Reset</button>
     </section>
 
     <hr class="div">
@@ -424,7 +458,7 @@
       </div>
     </section>
 
-    <!-- BREAK TIMER (between rounds only) -->
+    <!-- BREAK TIMER -->
     <section id="zoneBreak">
       <hr class="div">
       <p class="zlabel">Break Timer</p>
@@ -466,9 +500,12 @@
     <div class="setrow">
       <div>
         <div class="setlabel">Appearance</div>
-        <div class="setsub">Tap to switch theme</div>
+        <div class="setsub" id="themeSub">Dark mode</div>
       </div>
-      <button id="themeToggle">Dark</button>
+      <label class="sw-label" aria-label="Toggle light mode">
+        <input type="checkbox" id="themeToggle">
+        <span class="sw-track"><span class="sw-thumb"></span></span>
+      </label>
     </div>
 
     <div class="setrow col">
@@ -477,6 +514,8 @@
       <div class="setmini"><span class="s">A</span><span class="l">A</span></div>
       <button id="fsReset">Reset text size</button>
     </div>
+
+    <div class="setver">Trivia Host Timer v2.1</div>
   </div>
 </div>
 
@@ -493,14 +532,18 @@ var TOTAL_ROUNDS = 4;
 var LS_KEY = "triviaHostTimer.v1";
 var SET_KEY = "triviaHostTimer.settings.v1";
 
-/* ---------- persisted state ---------- */
+/* ---------- persisted state ----------
+   Two independent clocks share one run/pause state:
+     • round  -> resets to 0 on Stop & Log
+     • game   -> the session clock; keeps running across logs            */
 var state = {
   displayedRound: 1,
-  roundLog: [],          // {round, sec, questions, pace, notes}
-  questions: 0,
-  roundState: "idle",    // idle | running | paused
+  roundLog: [],          // {round, sec, pace, notes}
+  timerState: "idle",    // idle | running | paused  (drives BOTH clocks)
   roundAccumMs: 0,
-  roundAnchor: 0,        // epoch ms when last set running
+  roundAnchor: 0,        // epoch ms when round clock last set running
+  gameAccumMs: 0,
+  gameAnchor: 0,         // epoch ms when game clock last set running
   gameComplete: false
 };
 var showSummary = false;
@@ -511,7 +554,8 @@ var settings = { light:false, fs:1 };
 /* ---------- transient (not persisted) ---------- */
 var qDurationSec = 180;
 var qEndEpoch = 0;
-var qState = "idle";     // idle | running   (now runs straight into overflow)
+var qRemainMs = 0;       // when paused: ms remaining (negative once overflowing)
+var qState = "idle";     // idle | running | paused
 
 var bDurationSec = 600;
 var bEndEpoch = 0;
@@ -520,20 +564,20 @@ var bState = "idle";     // idle | running
 /* ---------- element refs ---------- */
 function $(id){ return document.getElementById(id); }
 var el = {
-  roundNum:$("roundNum"), gameClock:$("gameClock"),
+  gameTime:$("gameTime"),
   summaryBtn:$("summaryBtn"), clearBtn:$("clearBtn"),
   timers:$("timers"), summary:$("summary"),
   roundTime:$("roundTime"), runBtn:$("runBtn"), stopBtn:$("stopBtn"),
-  resetBtn:$("resetBtn"), qCount:$("qCount"), qPlus:$("qPlus"),
+  resetBtn:$("resetBtn"),
   zoneBreak:$("zoneBreak"),
   qTime:$("qTime"), qToggle:$("qToggle"), qMin:$("qMin"),
   qStart:$("qStart"), qReset:$("qReset"),
   bTime:$("bTime"), bMin:$("bMin"), bStart:$("bStart"), bReset:$("bReset"),
   log:$("log"),
-  roundPrev:$("roundPrev"), roundNext:$("roundNext"),
   // settings
   gear:$("gear"), settingsBack:$("settingsBack"), settingsClose:$("settingsClose"),
-  themeToggle:$("themeToggle"), fsRange:$("fsRange"), fsVal:$("fsVal"), fsReset:$("fsReset")
+  themeToggle:$("themeToggle"), themeSub:$("themeSub"),
+  fsRange:$("fsRange"), fsVal:$("fsVal"), fsReset:$("fsReset")
 };
 
 /* ---------- helpers ---------- */
@@ -544,7 +588,11 @@ function fmt(totalSec){
 }
 function elapsedRoundMs(){
   return state.roundAccumMs +
-    (state.roundState==="running" ? (Date.now()-state.roundAnchor) : 0);
+    (state.timerState==="running" ? (Date.now()-state.roundAnchor) : 0);
+}
+function elapsedGameMs(){
+  return state.gameAccumMs +
+    (state.timerState==="running" ? (Date.now()-state.gameAnchor) : 0);
 }
 function roundColorClass(sec){
   if(sec>=YELLOW_AT) return "t-yellow";
@@ -582,14 +630,16 @@ function load(){
     if(s && typeof s==="object"){
       state.displayedRound = s.displayedRound || 1;
       state.roundLog = Array.isArray(s.roundLog) ? s.roundLog : [];
-      state.questions = s.questions || 0;
-      state.roundState = s.roundState || "idle";
+      // accept old "roundState" key for backward compatibility
+      state.timerState = s.timerState || s.roundState || "idle";
       state.roundAccumMs = s.roundAccumMs || 0;
       state.roundAnchor = s.roundAnchor || 0;
+      state.gameAccumMs = s.gameAccumMs || 0;
+      state.gameAnchor = s.gameAnchor || 0;
       state.gameComplete = !!s.gameComplete;
-      // A round running at save time keeps ticking via its epoch anchor.
-      if(state.roundState==="running" && !state.roundAnchor){
-        state.roundState="paused";
+      // A timer running at save time keeps ticking via its epoch anchors.
+      if(state.timerState==="running" && (!state.roundAnchor || !state.gameAnchor)){
+        state.timerState="paused";
       }
     }
   }catch(e){}
@@ -598,7 +648,8 @@ function load(){
 /* ============ SETTINGS ============ */
 function applyTheme(light){
   document.body.classList.toggle("light", !!light);
-  el.themeToggle.textContent = light ? "\u2600\uFE0F Light" : "\uD83C\uDF19 Dark";
+  el.themeToggle.checked = !!light;
+  el.themeSub.textContent = light ? "Light mode" : "Dark mode";
 }
 function applyFs(fs){
   fs = Math.min(1.4, Math.max(0.8, fs || 1));
@@ -627,17 +678,23 @@ function loadSettings(){
 function openSettings(){ el.settingsBack.classList.add("open"); }
 function closeSettings(){ el.settingsBack.classList.remove("open"); }
 
-/* ============ ROUND TIMER ============ */
+/* ============ ROUND + SESSION TIMERS ============
+   One run/pause control drives both clocks together.                    */
 function toggleRun(){
-  if(state.roundState==="idle" || state.roundState==="paused"){
-    state.roundState="running";
-    state.roundAnchor=Date.now();
-  } else { // running -> pause
-    state.roundAccumMs += Date.now()-state.roundAnchor;
-    state.roundState="paused";
+  var now = Date.now();
+  if(state.timerState==="running"){            // running -> pause both
+    state.roundAccumMs += now - state.roundAnchor;
+    state.gameAccumMs  += now - state.gameAnchor;
+    state.timerState="paused";
+  } else {                                      // idle/paused -> run both
+    state.roundAnchor = now;
+    state.gameAnchor  = now;
+    state.timerState="running";
   }
   save(); renderStructure();
 }
+// Stop & Log: record the current round, reset ONLY the round clock.
+// The session (game) clock is never touched here — it keeps running.
 function stopLog(){
   var ms = elapsedRoundMs();
   if(ms < 1000) return; // nothing meaningful to log
@@ -645,13 +702,12 @@ function stopLog(){
   state.roundLog.push({
     round: state.displayedRound,
     sec: sec,
-    questions: state.questions,
     pace: paceFor(sec),
     notes: ""
   });
-  // fresh round
-  state.roundState="idle"; state.roundAccumMs=0; state.roundAnchor=0;
-  state.questions=0;
+  // reset the round clock only; if we're running, it restarts ticking now
+  state.roundAccumMs = 0;
+  state.roundAnchor = (state.timerState==="running") ? Date.now() : 0;
   resetQuestion(); resetBreak();
   if(state.roundLog.length >= TOTAL_ROUNDS){
     state.gameComplete=true;
@@ -661,18 +717,11 @@ function stopLog(){
   }
   save(); renderStructure();
 }
+// Reset: scrap the current round's time and start it over at 00:00.
+// The session clock keeps going (the time really did elapse).
 function resetRound(){
-  state.roundState="idle"; state.roundAccumMs=0; state.roundAnchor=0;
-  state.questions=0;   // a reset round starts fresh at Q:0
-  save(); renderStructure();
-}
-function stepRound(d){
-  state.displayedRound = Math.min(TOTAL_ROUNDS, Math.max(1, state.displayedRound+d));
-  save(); renderStructure();
-}
-function addQuestion(){
-  if(state.roundState==="idle") return; // only during an active round
-  state.questions++;
+  state.roundAccumMs = 0;
+  state.roundAnchor = (state.timerState==="running") ? Date.now() : 0;
   save(); renderStructure();
 }
 
@@ -686,15 +735,36 @@ function setQClass(phase){
     (phase==="warn" ? " warn" :
      phase==="over" ? " over" : "");
 }
-function startQuestion(){
-  if(qState==="running") return;
-  qEndEpoch = Date.now() + qDurationSec*1000;
-  qState="running";
+// reflect running/paused state on the question Start + Reset buttons
+function renderQuestionControls(){
+  el.qStart.textContent =
+    qState==="running" ? "Pause" :
+    qState==="paused"  ? "Resume" : "Start";
+  el.qStart.classList.toggle("primary",   qState !== "running");
+  el.qStart.classList.toggle("btn-pause", qState === "running");
+
+  var active = qState !== "idle";
+  el.qReset.disabled = !active;
+  el.qReset.classList.toggle("btn-reset-active", active);
+}
+function toggleQuestion(){
+  if(qState==="idle"){
+    qEndEpoch = Date.now() + qDurationSec*1000;
+    qState="running";
+  } else if(qState==="paused"){
+    qEndEpoch = Date.now() + qRemainMs;
+    qState="running";
+  } else { // running -> pause
+    qRemainMs = qEndEpoch - Date.now();
+    qState="paused";
+  }
+  renderQuestionControls();
 }
 function resetQuestion(){
-  qState="idle"; qEndEpoch=0;
+  qState="idle"; qEndEpoch=0; qRemainMs=0;
   setQClass("normal");
   el.qTime.textContent = fmt(qDurationSec);
+  renderQuestionControls();
 }
 function setQDuration(sec){
   sec = Math.min(300, Math.max(60, sec));
@@ -728,8 +798,9 @@ function setBreakDuration(min){
 function clearSession(){
   if(!confirm("Clear all rounds and start a new game night?")) return;
   state = {
-    displayedRound:1, roundLog:[], questions:0,
-    roundState:"idle", roundAccumMs:0, roundAnchor:0, gameComplete:false
+    displayedRound:1, roundLog:[],
+    timerState:"idle", roundAccumMs:0, roundAnchor:0,
+    gameAccumMs:0, gameAnchor:0, gameComplete:false
   };
   showSummary=false;
   resetQuestion(); resetBreak();
@@ -746,24 +817,19 @@ function renderStructure(){
   el.summary.style.display = summaryView ? "block" : "none";
   el.summaryBtn.textContent = (showSummary && !state.gameComplete) ? "Back to Timers" : "Summary";
 
-  el.roundNum.textContent = state.displayedRound;
-
-  // run button label reflects state
+  // run button label + color reflects state (drives both clocks)
   el.runBtn.textContent =
-    state.roundState==="running" ? "Pause" :
-    state.roundState==="paused"  ? "Resume" : "Start";
+    state.timerState==="running" ? "Pause" :
+    state.timerState==="paused"  ? "Resume" : "Start";
+  el.runBtn.classList.toggle("primary",   state.timerState !== "running");
+  el.runBtn.classList.toggle("btn-pause", state.timerState === "running");
 
-  // stop/reset only meaningful with elapsed time
+  // stop/reset only meaningful with elapsed round time
   var hasTime = elapsedRoundMs() >= 1000;
   el.stopBtn.disabled = !hasTime;
-  el.resetBtn.disabled = !hasTime && state.roundState==="idle";
-
-  // question counter only adds during a live round
-  el.qPlus.disabled = state.roundState==="idle";
-  el.qCount.textContent = state.questions;
-
-  // break zone shows only between rounds
-  el.zoneBreak.style.display = (state.roundState==="idle") ? "" : "none";
+  // reset is disabled at initial 00:00, red when there's time to clear
+  el.resetBtn.disabled = !hasTime;
+  el.resetBtn.classList.toggle("btn-reset-active", hasTime);
 
   if(summaryView) buildSummary(); else buildLog();
 }
@@ -782,7 +848,6 @@ function buildLog(){
         '<div class="logline">'+
           '<span class="r">R'+e.round+'</span>'+
           '<span class="tm">'+fmt(e.sec)+'</span>'+
-          '<span class="qq">'+e.questions+'Q</span>'+
           '<span class="badge '+b.c+'">'+b.e+' '+b.t+'</span>'+
         '</div>'+
         '<input type="text" data-i="'+i+'" placeholder="notes (e.g. beer round)\u2026" '+
@@ -814,7 +879,6 @@ function buildSummary(){
       '<div class="sumrow">'+
         '<span class="r">R'+e.round+'</span>'+
         '<span class="tm">'+fmt(e.sec)+'</span>'+
-        '<span class="qq">'+e.questions+'Q</span>'+
         '<span class="badge '+b.c+'">'+b.e+' '+b.t+'</span>'+
       '</div>';
   }
@@ -840,15 +904,23 @@ function buildSummary(){
 function tick(){
   var rSec = elapsedRoundMs()/1000;
   el.roundTime.textContent = fmt(rSec);
+  // keep the .sess sizing/colour classes off the round timer; pace colour only
   el.roundTime.className = "bigtime " + roundColorClass(rSec);
-  el.gameClock.textContent = fmt(totalLoggedSec());
+  // session clock: keeps running across logs
+  el.gameTime.textContent = fmt(elapsedGameMs()/1000);
 
   // toggle stop/reset enabled as time crosses 1s (cheap)
   var hasTime = rSec >= 1;
   if(el.stopBtn.disabled === hasTime) el.stopBtn.disabled = !hasTime;
+  if(el.resetBtn.disabled === hasTime){
+    el.resetBtn.disabled = !hasTime;
+    el.resetBtn.classList.toggle("btn-reset-active", hasTime);
+  }
 
-  if(qState==="running"){
-    var qrem = Math.ceil((qEndEpoch - Date.now())/1000);
+  if(qState==="running" || qState==="paused"){
+    var qrem = (qState==="running")
+      ? Math.ceil((qEndEpoch - Date.now())/1000)
+      : Math.ceil(qRemainMs/1000);
     if(qrem > 60){
       // plenty of time left
       el.qTime.textContent = fmt(qrem);
@@ -859,7 +931,6 @@ function tick(){
       setQClass("warn");
     } else {
       // time's up: keep counting into the negative (host is slow sometimes!)
-      // pulsing red background; number stays solid (no blinking)
       el.qTime.textContent = (qrem===0 ? "" : "-") + fmt(-qrem);
       setQClass("over");
     }
@@ -888,13 +959,10 @@ document.addEventListener("visibilitychange", function(){
 el.runBtn.onclick   = toggleRun;
 el.stopBtn.onclick  = stopLog;
 el.resetBtn.onclick = resetRound;
-el.qPlus.onclick    = addQuestion;
-el.roundPrev.onclick= function(){ stepRound(-1); };
-el.roundNext.onclick= function(){ stepRound(1); };
 el.summaryBtn.onclick = function(){ showSummary=!showSummary; renderStructure(); };
 el.clearBtn.onclick = clearSession;
 
-el.qStart.onclick = startQuestion;
+el.qStart.onclick = toggleQuestion;
 el.qReset.onclick = resetQuestion;
 el.qToggle.onclick= toggleQuestionPreset;
 el.qMin.onchange  = function(){ setQDuration((parseInt(el.qMin.value,10)||3)*60); };
@@ -912,8 +980,8 @@ el.settingsBack.addEventListener("click", function(ev){
 document.addEventListener("keydown", function(ev){
   if(ev.key==="Escape") closeSettings();
 });
-el.themeToggle.onclick = function(){
-  settings.light = !settings.light;
+el.themeToggle.onchange = function(){
+  settings.light = el.themeToggle.checked;
   applyTheme(settings.light);
   saveSettings();
 };
