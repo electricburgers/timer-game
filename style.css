@@ -1,0 +1,506 @@
+  /* All text/background pairs below are verified (relative-luminance
+     calculation) to meet WCAG 2.1 AAA: >=7:1 for normal text, >=4.5:1 for
+     large text (the round/question timers, 24px+ / bold 18px+). */
+  :root{
+    color-scheme:dark;
+    --bg:#0c0e11;
+    --panel:#15191e;
+    --line:#262c33;
+    --text:#f2f4f6;
+    --muted:#9da4ac;         /* 7.68:1 / 7.01:1 vs bg/panel */
+    --btn:#1c2228;
+    --btn-h:#262e36;
+    --btn-border:#333b44;
+    --blue:#34a4f4;          /* 7.14:1 vs bg (round-timer 15:00 state) */
+    --green:#1ed278;         /* 9.71:1 vs bg (round-timer 20:00 state) */
+    --yellow:#f5cf38;        /* 12.76:1 vs bg (round-timer 30:00 state) */
+    --focus:#7cc0ff;
+    --input-bg:#0a0c0f;
+    --primary-bg:#1f3a57;
+    --primary-border:#2c5279;
+    --primary-h:#264662;
+    --danger-bg:#3a1f24;
+    --danger-border:#5a2e34;
+    --danger-h:#46262c;
+    /* pace chips (round log badges) + reset-active button: solid fill,
+       text chosen per-fill for a guaranteed high-contrast pairing */
+    --pace-on-bg:#0d5933;    --pace-on-text:#ffffff;    /* 8.42:1 */
+    --pace-fast-bg:#591a0d;  --pace-fast-text:#ffffff;  /* 13.31:1 */
+    --pace-slow-bg:#59400d;  --pace-slow-text:#ffffff;  /* 9.70:1 */
+    /* question-countdown pulse: background animates, text stays solid */
+    --warn-a:#df9f20; --warn-b:#ecc679; --warn-text:#100c00;   /* 8.20 / 11.62 */
+    --over-a:#591a0d; --over-b:#9c2d16; --over-text:#ffffff;   /* 13.31 / 7.50 */
+    --fs:1;            /* text-size scale, driven by the settings slider */
+  }
+  /* ---- LIGHT MODE ---- */
+  body.light{
+    color-scheme:light;
+    --bg:#eef1f5;
+    --panel:#ffffff;
+    --line:#d6dce3;
+    --text:#161b21;
+    --muted:#4a525a;         /* 7.01:1 / 7.94:1 vs bg/panel */
+    --btn:#ffffff;
+    --btn-h:#eceff3;
+    --btn-border:#c2cad3;
+    --blue:#075288;          /* 7.21:1 vs bg */
+    --green:#0d5e36;         /* 6.94:1 vs bg (large text) */
+    --yellow:#6f5006;        /* 6.56:1 vs bg (large text) */
+    --focus:#1463c9;
+    --input-bg:#f4f6f8;
+    --primary-bg:#074c7e;    /* dark enough that white button text hits 8.96:1 */
+    --primary-border:#06416b;
+    --primary-h:#06375a;
+    --danger-bg:#fbeaea;
+    --danger-border:#e3b4b4;
+    --danger-h:#f5dada;
+    --pace-on-bg:#bcf5d9;    --pace-on-text:#111111;    /* 15.47:1 */
+    --pace-fast-bg:#f5c6bc;  --pace-fast-text:#111111;  /* 12.31:1 */
+    --pace-slow-bg:#f5e2bc;  --pace-slow-text:#111111;  /* 14.83:1 */
+    --warn-a:#ecc679; --warn-b:#f5e2bc; --warn-text:#111111;  /* 11.62 / 14.83 */
+    --over-a:#ec8c79; --over-b:#f5c6bc; --over-text:#111111; /* 7.73 / 12.31 */
+  }
+  /* ---- COLOR-BLIND PALETTE (dark) ----
+     Swaps the red/green pair for blue/vermillion/amber (Okabe-Ito derived)
+     so on-pace vs. too-fast is never a pure red-vs-green distinction. */
+  body.cb{
+    --green:#1cc49a;         /* teal, replaces round-timer green: 8.66:1 vs bg */
+    --yellow:#f5b038;        /* orange, replaces round-timer yellow: 10.26:1 vs bg */
+    --pace-on-bg:#0d3959;    --pace-on-text:#ffffff;    /* blue, 12.02:1 */
+    --pace-fast-bg:#592b0d;  --pace-fast-text:#ffffff;  /* vermillion, 11.82:1 */
+    --pace-slow-bg:#59400d;  --pace-slow-text:#ffffff;  /* amber, 9.70:1 */
+    --warn-a:#e2a336; --warn-b:#ecc279; --warn-text:#100c00; /* 8.57 / 11.29 */
+    --over-a:#592b0d; --over-b:#864113; --over-text:#ffffff; /* 11.82 / 7.56 */
+  }
+  /* ---- COLOR-BLIND PALETTE (light) ---- */
+  body.light.cb{
+    --green:#0c5543;         /* teal: 7.74:1 vs bg */
+    --yellow:#6f4906;        /* orange: 7.04:1 vs bg */
+    --pace-on-bg:#bcdef5;    --pace-on-text:#111111;    /* blue, 13.40:1 */
+    --pace-fast-bg:#f5d3bc;  --pace-fast-text:#111111;  /* vermillion, 13.42:1 */
+    --pace-slow-bg:#f5e0bc;  --pace-slow-text:#111111;  /* amber, 14.63:1 */
+    --warn-a:#ecc279; --warn-b:#f5e0bc; --warn-text:#111111; /* 11.29 / 14.63 */
+    --over-a:#eca779; --over-b:#f5d3bc; --over-text:#111111; /* 9.32 / 13.42 */
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:calc(14px * var(--fs));
+    line-height:1.3;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    max-width:900px;
+    margin:0 auto;
+    padding:8px 10px 14px;
+  }
+  /* ---- the round log is ALWAYS a column to the right of the timers, at
+     every width down to the narrowest phone — no stacking breakpoint.
+     minmax() does the work: the timer column claims space up to 380px
+     first, then whatever is left goes to the log column. On a phone that
+     leaves the log column pinned near its 84px floor (compact mode, see
+     the max-width:600px rules throughout this file); once the timer
+     column hits its 380px cap the log column starts actually growing. ---- */
+  #layout{
+    display:grid;
+    grid-template-columns:minmax(200px,380px) minmax(84px,1fr);
+    gap:0 16px;
+    align-items:start;
+  }
+  #colMain{container-type:inline-size;}
+  #colLog{
+    position:sticky;
+    top:8px;
+    border-left:1px solid var(--line);
+    padding-left:12px;
+    margin-left:-1px;
+    container-type:inline-size;
+  }
+  #colLog .logwrap{
+    max-height:calc(100vh - 150px);
+    overflow-y:auto;
+    padding-right:2px;
+  }
+  @media (min-width:600px){
+    #layout{gap:0 20px;}
+    #colLog{padding-left:20px;}
+  }
+  /* ---- focus visibility (quality floor) ---- */
+  button:focus-visible,input:focus-visible{
+    outline:2px solid var(--focus);
+    outline-offset:1px;
+  }
+
+  /* ---- header ---- */
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .apptitle{
+    font-size:calc(16px * var(--fs));font-weight:700;letter-spacing:.2px;
+  }
+  /* ---- two-timer pair (current round + session) ---- */
+  .timepair{
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;
+    align-items:end;margin:2px 0 10px;
+  }
+  /* container queries size these digits off the column's REAL rendered
+     width, so they can't overflow regardless of the phone's width or how
+     high the --fs text-size slider is pushed (see min() below) — a vw-
+     based guess can't see either of those at once, only one. */
+  .tcol{text-align:center;min-width:0;container-type:inline-size;}
+  .tlabel{
+    font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);font-weight:700;margin-bottom:3px;
+  }
+  /* var(--fs) still scales these up on request, but never past what the
+     column can actually hold (30cqw ≈ what "00:00" needs at this weight). */
+  .timepair .bigtime{font-size:min(calc(36px * var(--fs)), 30cqw);margin:0;}
+  .timepair .bigtime.sess{color:var(--muted);}
+  .toplinks{
+    display:flex;justify-content:flex-end;gap:6px;
+    margin-top:6px;
+  }
+  .linkbtn{
+    min-height:30px;padding:3px 10px;
+    font-size:calc(11.5px * var(--fs));color:var(--muted);
+    background:transparent;border:1px solid var(--btn-border);
+  }
+  .linkbtn:hover{color:var(--text);}
+
+  /* ---- gear / icon buttons ---- */
+  .iconbtn{
+    width:38px;min-height:38px;padding:0;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:1px solid var(--btn-border);
+    color:var(--text);
+  }
+  .iconbtn:hover{background:var(--btn-h);}
+  .iconbtn svg{width:21px;height:21px;display:block;}
+
+  hr.div{
+    border:none;border-top:1px solid var(--line);
+    margin:10px 0;
+  }
+
+  /* ---- generic buttons / inputs ---- */
+  button{
+    background:var(--btn);
+    color:var(--text);
+    border:1px solid var(--btn-border);
+    border-radius:5px;
+    min-height:38px;
+    font-size:calc(13px * var(--fs));font-weight:600;
+    cursor:pointer;
+    padding:6px 8px;
+    -webkit-tap-highlight-color:transparent;
+    transition:background 0.12s, border-color 0.12s, color 0.12s,
+               transform 0.08s ease, filter 0.08s ease;
+  }
+  button:hover{background:var(--btn-h);}
+  button:active:not(:disabled){
+    transform:translateY(2px) scale(0.95);
+    filter:brightness(0.78);
+  }
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  input[type=number]{
+    background:var(--input-bg);
+    color:var(--text);
+    border:1px solid var(--btn-border);
+    border-radius:5px;
+    min-height:38px;
+    width:100%;
+    font-size:calc(13px * var(--fs));
+    text-align:center;
+    padding:4px;
+    font-variant-numeric:tabular-nums;
+  }
+  input[type=text],textarea{
+    background:var(--input-bg);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:5px;
+    width:100%;
+    font-size:calc(12px * var(--fs));
+    padding:6px 8px;min-height:30px;
+  }
+  textarea{
+    min-height:76px;font-family:inherit;resize:vertical;
+  }
+  input[type=range]{accent-color:var(--blue);width:100%;}
+  .primary{background:var(--primary-bg);border-color:var(--primary-border);color:#fff;}
+  .primary:hover{background:var(--primary-h);}
+  .danger{background:var(--danger-bg);border-color:var(--danger-border);}
+  .danger:hover{background:var(--danger-h);}
+
+  /* ---- Pause state (timer is running): bold amber, clearly != blue ---- */
+  .btn-pause,
+  body.light .btn-pause{
+    background:#f59e0b;
+    border-color:#b9730a;
+    color:#1a1100;
+  }
+  .btn-pause:hover,
+  body.light .btn-pause:hover{background:#fbb024;}
+
+  /* ---- Reset active state: solid "fast/danger" pace color, all themes ---- */
+  .btn-reset-active{
+    background:var(--pace-fast-bg);
+    border-color:var(--pace-fast-bg);
+    color:var(--pace-fast-text);
+  }
+  .btn-reset-active:hover{filter:brightness(1.15);}
+
+  /* ---- section labels ---- */
+  .zlabel{
+    font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
+    color:var(--muted);margin:0 0 5px;font-weight:700;
+  }
+
+  /* ---- round timer ----
+     min() against #colMain's own container width (cqw) means these
+     digits size off the column's real, current width — so they can
+     never overflow it, whether that's because the phone is narrow or
+     because --fs (text size) is turned up, or both at once. */
+  .bigtime{
+    font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:min(calc(52px * var(--fs)), 24cqw);font-weight:700;line-height:1;
+    text-align:center;letter-spacing:1px;
+    margin:2px 0 8px;
+    color:var(--text);
+  }
+  .bigtime.t-blue{color:var(--blue);}
+  .bigtime.t-green{color:var(--green);}
+  .bigtime.t-yellow{color:var(--yellow);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  /* Start / End Round & Log stack instead of squeezing side-by-side once
+     the timer column has shrunk down to make room for the log column. */
+  @media (max-width:600px){
+    .grid2{grid-template-columns:1fr;}
+  }
+
+  /* ---- question + break displays ---- */
+  .midtime{
+    font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:min(calc(30px * var(--fs)), 14cqw);font-weight:700;text-align:center;
+    line-height:1;
+    margin:0 0 8px;color:var(--text);
+  }
+  /* ---- question countdown states ----
+     No blinking: the NUMBER stays solid; the BACKGROUND pulses.
+       .warn  -> 1-minute warning, pulsing yellow
+       .over  -> overflow (negative time), pulsing red                       */
+  .qtime{
+    border-radius:10px;
+    padding:6px 4px;
+    transition:background-color .25s ease;
+  }
+  .qtime.warn{
+    color:var(--warn-text);
+    animation:pulseWarn 1s ease-in-out infinite;
+  }
+  .qtime.over{
+    color:var(--over-text);
+    animation:pulseOver .9s ease-in-out infinite;
+  }
+  @keyframes pulseWarn{
+    0%,100%{background-color:var(--warn-a);}
+    50%{background-color:var(--warn-b);}
+  }
+  @keyframes pulseOver{
+    0%,100%{background-color:var(--over-a);}
+    50%{background-color:var(--over-b);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .qtime.warn{animation:none;background-color:var(--warn-b);}
+    .qtime.over{animation:none;background-color:var(--over-b);}
+  }
+
+  .crow{display:grid;gap:6px;align-items:center;}
+  .crow.q{grid-template-columns:auto 64px 1fr 1fr;}
+  .crow.b{grid-template-columns:64px 1fr 1fr;}
+  .toggle{padding:6px 10px;white-space:nowrap;}
+  /* Once the timer column is phone-narrow, 4 (or 3) controls across one
+     row would squeeze each into an unreadable sliver — reflow into a
+     2-column x 2-row grid instead. IDs (not markup order) place each
+     control, so no HTML changes were needed. */
+  @media (max-width:600px){
+    .crow.q{
+      grid-template-columns:1fr 1fr;
+      grid-template-areas:"toggle min" "start reset";
+    }
+    #qToggle{grid-area:toggle;}
+    #qMin{grid-area:min;}
+    #qStart{grid-area:start;}
+    #qReset{grid-area:reset;}
+
+    .crow.b{
+      grid-template-columns:1fr 1fr;
+      grid-template-areas:"input start" "reset reset";
+    }
+    #bMin{grid-area:input;}
+    #bStart{grid-area:start;}
+    #bReset{grid-area:reset;}
+  }
+
+  /* ---- round log ---- */
+  .logwrap{margin-top:4px;}
+  .logitem{
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:6px 8px;
+    margin-bottom:6px;
+    background:var(--panel);
+  }
+  .logline{
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+    /* capped by #colLog's own width (cqw) so a high --fs setting can't
+       push "R1 15:00" wider than the compact phone-width log column */
+    font-size:min(calc(13px * var(--fs)), 18cqw);margin-bottom:5px;
+  }
+  /* .rt keeps round # + time paired on their own line even when .logline
+     itself stacks (compact log column) — see max-width:600px below. */
+  .rt{display:flex;align-items:center;gap:7px;}
+  .logline .r{font-weight:700;}
+  .logline .tm{font-variant-numeric:tabular-nums;font-weight:700;}
+  .badge{
+    margin-left:auto;
+    font-size:calc(11px * var(--fs));font-weight:700;
+    padding:2px 7px;border-radius:99px;white-space:nowrap;
+    border:1px solid transparent;
+  }
+  /* Solid fills (not color-only): each badge also carries a distinct
+     glyph (checkmark / down-triangle / up-triangle) set in JS, so pace
+     is never conveyed by hue alone. */
+  .b-on{color:var(--pace-on-text);background:var(--pace-on-bg);}
+  .b-fast{color:var(--pace-fast-text);background:var(--pace-fast-bg);}
+  .b-slow{color:var(--pace-slow-text);background:var(--pace-slow-bg);}
+
+  /* ---- compact round log (phone-width log column) ----
+     Scoped to #colLog only — the Summary panel isn't squeezed next to
+     the timer column, so it keeps full badge text and the inline notes
+     field regardless of viewport width.
+     Here: the inline notes field and the badge's text label are dropped,
+     and round/time stack above the pace glyph instead of sitting on one
+     line — a ~84-140px column has plenty of *height* to spare, so
+     stacking is what actually makes this width work (a single row of
+     "R1 15:00 ▼" does not fit in 84px, however little is stripped out of
+     it). Tapping the row opens the round-detail modal (#roundBack) to
+     read/edit notes. */
+  @media (max-width:600px){
+    #colLog .logitem{padding:6px 7px;cursor:pointer;}
+    #colLog .logitem:active{background:var(--btn-h);}
+    #colLog .logitem input[type=text]{display:none;}
+    #colLog .logline{
+      margin-bottom:0;flex-wrap:wrap;
+      flex-direction:column;align-items:flex-start;gap:3px;
+    }
+    #colLog .badge{padding:2px 6px;margin-left:0;}
+    #colLog .badgeText{display:none;}
+  }
+  .empty{color:var(--muted);font-size:calc(12.5px * var(--fs));text-align:center;padding:8px 0;}
+
+  /* ---- summary ---- */
+  #summary{display:none;}
+  .sumhead{font-size:calc(16px * var(--fs));font-weight:700;margin:2px 0 8px;}
+  .sumtotal{
+    font-variant-numeric:tabular-nums;
+    font-size:calc(30px * var(--fs));font-weight:700;text-align:center;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    margin:2px 0;
+  }
+  .sumtotal small{display:block;font-size:calc(10.5px * var(--fs));color:var(--muted);
+    text-transform:uppercase;letter-spacing:1px;font-weight:700;
+    font-family:inherit;}
+  .sumrow{
+    display:flex;align-items:center;gap:7px;
+    border-top:1px solid var(--line);padding:6px 2px;font-size:calc(13px * var(--fs));
+  }
+  .sumrow .tm{font-variant-numeric:tabular-nums;font-weight:700;}
+  .sumavg{
+    display:flex;justify-content:space-between;
+    border-top:1px solid var(--line);padding:7px 2px 2px;
+    font-size:calc(13px * var(--fs));color:var(--muted);
+  }
+  .sumavg b{color:var(--text);font-variant-numeric:tabular-nums;}
+  .verdict{
+    margin-top:10px;padding:8px 10px;
+    border:1px solid var(--btn-border);border-radius:5px;
+    background:var(--panel);font-size:calc(13px * var(--fs));text-align:center;
+  }
+  .sumnote{font-size:calc(11px * var(--fs));color:var(--muted);margin-top:5px;}
+
+  /* ---- settings modal ---- */
+  .modal-back{
+    position:fixed;inset:0;z-index:50;
+    background:rgba(0,0,0,.55);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:max(24px,env(safe-area-inset-top)) 14px 14px;
+  }
+  .modal-back.open{display:flex;}
+  .modal{
+    width:100%;max-width:340px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 14px 16px;
+    box-shadow:0 14px 40px rgba(0,0,0,.4);
+  }
+  .modalhead{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .modaltitle{font-size:calc(16px * var(--fs));font-weight:700;}
+  .setrow{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 0;border-top:1px solid var(--line);
+  }
+  .setrow.col{flex-direction:column;align-items:stretch;gap:8px;}
+  .setlabel{
+    font-size:calc(12.5px * var(--fs));font-weight:700;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .setlabel small{color:var(--muted);font-weight:600;}
+  .setsub{font-size:calc(10.5px * var(--fs));color:var(--muted);font-weight:600;margin-top:2px;}
+  .setmini{
+    display:flex;align-items:center;justify-content:space-between;
+    color:var(--muted);font-weight:700;line-height:1;padding:0 2px;
+  }
+  .setmini .s{font-size:calc(12px * var(--fs));}
+  .setmini .l{font-size:calc(20px * var(--fs));}
+  .setver{
+    text-align:center;padding-top:12px;
+    font-size:calc(10.5px * var(--fs));color:var(--muted);letter-spacing:.4px;
+  }
+
+  /* ---- toggle switch (light/dark) ---- */
+  .sw-label{display:inline-flex;align-items:center;cursor:pointer;}
+  .sw-label input{position:absolute;opacity:0;width:0;height:0;}
+  .sw-track{
+    width:46px;height:26px;
+    background:var(--btn-border);
+    border-radius:13px;
+    position:relative;
+    transition:background 0.2s;
+    flex-shrink:0;
+  }
+  .sw-label input:checked ~ .sw-track{background:var(--blue);}
+  .sw-thumb{
+    position:absolute;
+    top:3px;left:3px;
+    width:20px;height:20px;
+    background:#fff;
+    border-radius:50%;
+    transition:transform 0.2s;
+    box-shadow:0 1px 4px rgba(0,0,0,.35);
+  }
+  .sw-label input:checked ~ .sw-track .sw-thumb{transform:translateX(20px);}
+  .sw-label:focus-within .sw-track{outline:2px solid var(--focus);outline-offset:2px;}

@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <!--
   ============================================================================
-  TRIVIA HOST TIMER  —  single-file app, no build tools, no dependencies.
+  TRIVIA HOST TIMER  —  no build tools, no dependencies.
   Built for Chicago Style Trivia (Revolution Entertainment) hosting.
-  v2.0
+  v2.3
+
+  Three files: index.html (structure), style.css, app.js. Keep all three
+  together in the repo root.
 
   DEPLOY TO GITHUB PAGES
   ----------------------
-  1. Put this file in a repo, named exactly: index.html
+  1. Put index.html, style.css, and app.js in a repo (root, or same folder).
   2. Push to the `main` branch.
   3. On GitHub: Settings -> Pages -> Build and deployment
        Source:  Deploy from a branch
        Branch:  main   /  (root)
   4. Save. Your app will be live at:
        https://<your-username>.github.io/<repo-name>/
-  (No CDN, no npm. All HTML, CSS, and JS are inline below.)
+  (No CDN, no npm, no bundler — just the three static files.)
 
   NOTE: The Wake Lock API only works over HTTPS (GitHub Pages is HTTPS) or
   on localhost. It silently no-ops elsewhere; everything else still works.
@@ -25,381 +28,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Trivia Host Timer v2.0</title>
-<style>
-  :root{
-    color-scheme:dark;
-    --bg:#0c0e11;
-    --panel:#15191e;
-    --line:#262c33;
-    --text:#f2f4f6;
-    --muted:#8a939c;
-    --btn:#1c2228;
-    --btn-h:#262e36;
-    --btn-border:#333b44;
-    --blue:#4ea3ff;
-    --green:#33d17a;
-    --yellow:#ffce3a;
-    --red:#ff4d4d;
-    --focus:#7cc0ff;
-    --input-bg:#0a0c0f;
-    --primary-bg:#1f3a57;
-    --primary-border:#2c5279;
-    --primary-h:#264662;
-    --danger-bg:#3a1f24;
-    --danger-border:#5a2e34;
-    --danger-h:#46262c;
-    --fs:1;            /* text-size scale, driven by the settings slider */
-  }
-  /* ---- LIGHT MODE ---- */
-  body.light{
-    color-scheme:light;
-    --bg:#eef1f5;
-    --panel:#ffffff;
-    --line:#d6dce3;
-    --text:#161b21;
-    --muted:#5c6670;
-    --btn:#ffffff;
-    --btn-h:#eceff3;
-    --btn-border:#c2cad3;
-    --blue:#1463c9;
-    --green:#138a4a;
-    --yellow:#9a6b00;
-    --red:#cf2b2b;
-    --focus:#1463c9;
-    --input-bg:#f4f6f8;
-    --primary-bg:#1463c9;
-    --primary-border:#1257ad;
-    --primary-h:#1257ad;
-    --danger-bg:#fbeaea;
-    --danger-border:#e3b4b4;
-    --danger-h:#f5dada;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    font-size:calc(14px * var(--fs));
-    line-height:1.3;
-    -webkit-font-smoothing:antialiased;
-  }
-  #app{
-    max-width:380px;
-    margin:0 auto;
-    padding:8px 10px 14px;
-  }
-  /* ---- focus visibility (quality floor) ---- */
-  button:focus-visible,input:focus-visible{
-    outline:2px solid var(--focus);
-    outline-offset:1px;
-  }
-
-  /* ---- header ---- */
-  header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-  }
-  .apptitle{
-    font-size:calc(16px * var(--fs));font-weight:700;letter-spacing:.2px;
-  }
-  /* ---- two-timer pair (current round + session) ---- */
-  .timepair{
-    display:grid;grid-template-columns:1fr 1fr;gap:8px;
-    align-items:end;margin:2px 0 10px;
-  }
-  .tcol{text-align:center;min-width:0;}
-  .tlabel{
-    font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
-    color:var(--muted);font-weight:700;margin-bottom:3px;
-  }
-  .timepair .bigtime{font-size:calc(36px * var(--fs));margin:0;}
-  .timepair .bigtime.sess{color:var(--muted);}
-  .toplinks{
-    display:flex;justify-content:flex-end;gap:6px;
-    margin-top:6px;
-  }
-  .linkbtn{
-    min-height:30px;padding:3px 10px;
-    font-size:calc(11.5px * var(--fs));color:var(--muted);
-    background:transparent;border:1px solid var(--btn-border);
-  }
-  .linkbtn:hover{color:var(--text);}
-
-  /* ---- gear / icon buttons ---- */
-  .iconbtn{
-    width:38px;min-height:38px;padding:0;
-    display:flex;align-items:center;justify-content:center;
-    background:transparent;border:1px solid var(--btn-border);
-    color:var(--text);
-  }
-  .iconbtn:hover{background:var(--btn-h);}
-  .iconbtn svg{width:21px;height:21px;display:block;}
-
-  hr.div{
-    border:none;border-top:1px solid var(--line);
-    margin:10px 0;
-  }
-
-  /* ---- generic buttons / inputs ---- */
-  button{
-    background:var(--btn);
-    color:var(--text);
-    border:1px solid var(--btn-border);
-    border-radius:5px;
-    min-height:38px;
-    font-size:calc(13px * var(--fs));font-weight:600;
-    cursor:pointer;
-    padding:6px 8px;
-    -webkit-tap-highlight-color:transparent;
-    transition:background 0.12s, border-color 0.12s, color 0.12s,
-               transform 0.08s ease, filter 0.08s ease;
-  }
-  button:hover{background:var(--btn-h);}
-  button:active:not(:disabled){
-    transform:translateY(2px) scale(0.95);
-    filter:brightness(0.78);
-  }
-  button:disabled{opacity:.4;cursor:not-allowed;}
-  input[type=number]{
-    background:var(--input-bg);
-    color:var(--text);
-    border:1px solid var(--btn-border);
-    border-radius:5px;
-    min-height:38px;
-    width:100%;
-    font-size:calc(13px * var(--fs));
-    text-align:center;
-    padding:4px;
-    font-variant-numeric:tabular-nums;
-  }
-  input[type=text]{
-    background:var(--input-bg);
-    color:var(--text);
-    border:1px solid var(--line);
-    border-radius:5px;
-    width:100%;
-    font-size:calc(12px * var(--fs));
-    padding:6px 8px;min-height:30px;
-  }
-  input[type=range]{accent-color:var(--blue);width:100%;}
-  .primary{background:var(--primary-bg);border-color:var(--primary-border);color:#fff;}
-  .primary:hover{background:var(--primary-h);}
-  .danger{background:var(--danger-bg);border-color:var(--danger-border);}
-  .danger:hover{background:var(--danger-h);}
-
-  /* ---- Pause state (timer is running): bold amber, clearly != blue ---- */
-  .btn-pause,
-  body.light .btn-pause{
-    background:#f59e0b;
-    border-color:#b9730a;
-    color:#1a1100;
-  }
-  .btn-pause:hover,
-  body.light .btn-pause:hover{background:#fbb024;}
-
-  /* ---- Reset active state: red in both themes ---- */
-  .btn-reset-active,
-  body.light .btn-reset-active{
-    background:var(--danger-bg);
-    border-color:var(--danger-border);
-    color:var(--red);
-  }
-  .btn-reset-active:hover,
-  body.light .btn-reset-active:hover{background:var(--danger-h);}
-
-  /* ---- section labels ---- */
-  .zlabel{
-    font-size:calc(10.5px * var(--fs));text-transform:uppercase;letter-spacing:1px;
-    color:var(--muted);margin:0 0 5px;font-weight:700;
-  }
-
-  /* ---- round timer ---- */
-  .bigtime{
-    font-variant-numeric:tabular-nums;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:calc(52px * var(--fs));font-weight:700;line-height:1;
-    text-align:center;letter-spacing:1px;
-    margin:2px 0 8px;
-    color:var(--text);
-  }
-  .bigtime.t-blue{color:var(--blue);}
-  .bigtime.t-green{color:var(--green);}
-  .bigtime.t-yellow{color:var(--yellow);}
-
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-
-  /* ---- question + break displays ---- */
-  .midtime{
-    font-variant-numeric:tabular-nums;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    font-size:calc(30px * var(--fs));font-weight:700;line-height:1;text-align:center;
-    margin:0 0 8px;color:var(--text);
-  }
-  /* ---- question countdown states ----
-     No blinking: the NUMBER stays solid; the BACKGROUND pulses.
-       .warn  -> 1-minute warning, pulsing yellow
-       .over  -> overflow (negative time), pulsing red                       */
-  .qtime{
-    border-radius:10px;
-    padding:6px 4px;
-    transition:background-color .25s ease;
-  }
-  .qtime.warn{
-    color:#241c00;
-    animation:pulseWarn 1s ease-in-out infinite;
-  }
-  .qtime.over{
-    color:#ffffff;
-    animation:pulseOver .9s ease-in-out infinite;
-  }
-  @keyframes pulseWarn{
-    0%,100%{background-color:#b8901e;}
-    50%{background-color:#ffd24a;}
-  }
-  @keyframes pulseOver{
-    0%,100%{background-color:#7a1f1f;}
-    50%{background-color:#ff4d4d;}
-  }
-  @media (prefers-reduced-motion:reduce){
-    .qtime.warn{animation:none;background-color:#ffd24a;}
-    .qtime.over{animation:none;background-color:#ff4d4d;}
-  }
-
-  .crow{display:grid;gap:6px;align-items:center;}
-  .crow.q{grid-template-columns:auto 64px 1fr 1fr;}
-  .crow.b{grid-template-columns:64px 1fr 1fr;}
-  .toggle{padding:6px 10px;white-space:nowrap;}
-
-  /* ---- round log ---- */
-  .logwrap{margin-top:4px;}
-  .logitem{
-    border:1px solid var(--line);
-    border-radius:5px;
-    padding:6px 8px;
-    margin-bottom:6px;
-    background:var(--panel);
-  }
-  .logline{
-    display:flex;align-items:center;gap:7px;flex-wrap:wrap;
-    font-size:calc(13px * var(--fs));margin-bottom:5px;
-  }
-  .logline .r{font-weight:700;}
-  .logline .tm{font-variant-numeric:tabular-nums;font-weight:700;}
-  .badge{
-    margin-left:auto;
-    font-size:calc(11px * var(--fs));font-weight:700;
-    padding:2px 7px;border-radius:99px;white-space:nowrap;
-    border:1px solid transparent;
-  }
-  .b-on{color:var(--green);border-color:#1f5a3a;background:#11281c;}
-  .b-fast{color:var(--red);border-color:#5a2630;background:#2a1418;}
-  .b-slow{color:var(--yellow);border-color:#5a4a1f;background:#2a2410;}
-  body.light .b-on{color:#138a4a;border-color:#a9d9bd;background:#e6f5ec;}
-  body.light .b-fast{color:#cf2b2b;border-color:#e6b3b3;background:#fbe9e9;}
-  body.light .b-slow{color:#9a6b00;border-color:#e0cf9a;background:#f7f0d8;}
-  .empty{color:var(--muted);font-size:calc(12.5px * var(--fs));text-align:center;padding:8px 0;}
-
-  /* ---- summary ---- */
-  #summary{display:none;}
-  .sumhead{font-size:calc(16px * var(--fs));font-weight:700;margin:2px 0 8px;}
-  .sumtotal{
-    font-variant-numeric:tabular-nums;
-    font-size:calc(30px * var(--fs));font-weight:700;text-align:center;
-    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    margin:2px 0;
-  }
-  .sumtotal small{display:block;font-size:calc(10.5px * var(--fs));color:var(--muted);
-    text-transform:uppercase;letter-spacing:1px;font-weight:700;
-    font-family:inherit;}
-  .sumrow{
-    display:flex;align-items:center;gap:7px;
-    border-top:1px solid var(--line);padding:6px 2px;font-size:calc(13px * var(--fs));
-  }
-  .sumrow .tm{font-variant-numeric:tabular-nums;font-weight:700;}
-  .sumavg{
-    display:flex;justify-content:space-between;
-    border-top:1px solid var(--line);padding:7px 2px 2px;
-    font-size:calc(13px * var(--fs));color:var(--muted);
-  }
-  .sumavg b{color:var(--text);font-variant-numeric:tabular-nums;}
-  .verdict{
-    margin-top:10px;padding:8px 10px;
-    border:1px solid var(--btn-border);border-radius:5px;
-    background:var(--panel);font-size:calc(13px * var(--fs));text-align:center;
-  }
-  .sumnote{font-size:calc(11px * var(--fs));color:var(--muted);margin-top:5px;}
-
-  /* ---- settings modal ---- */
-  .modal-back{
-    position:fixed;inset:0;z-index:50;
-    background:rgba(0,0,0,.55);
-    display:none;align-items:flex-start;justify-content:center;
-    padding:max(24px,env(safe-area-inset-top)) 14px 14px;
-  }
-  .modal-back.open{display:flex;}
-  .modal{
-    width:100%;max-width:340px;
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:12px;
-    padding:14px 14px 16px;
-    box-shadow:0 14px 40px rgba(0,0,0,.4);
-  }
-  .modalhead{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:10px;
-  }
-  .modaltitle{font-size:calc(16px * var(--fs));font-weight:700;}
-  .setrow{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
-    padding:10px 0;border-top:1px solid var(--line);
-  }
-  .setrow.col{flex-direction:column;align-items:stretch;gap:8px;}
-  .setlabel{
-    font-size:calc(12.5px * var(--fs));font-weight:700;
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-  }
-  .setlabel small{color:var(--muted);font-weight:600;}
-  .setsub{font-size:calc(10.5px * var(--fs));color:var(--muted);font-weight:600;margin-top:2px;}
-  .setmini{
-    display:flex;align-items:center;justify-content:space-between;
-    color:var(--muted);font-weight:700;line-height:1;padding:0 2px;
-  }
-  .setmini .s{font-size:calc(12px * var(--fs));}
-  .setmini .l{font-size:calc(20px * var(--fs));}
-  .setver{
-    text-align:center;padding-top:12px;
-    font-size:calc(10.5px * var(--fs));color:var(--muted);letter-spacing:.4px;
-  }
-
-  /* ---- toggle switch (light/dark) ---- */
-  .sw-label{display:inline-flex;align-items:center;cursor:pointer;}
-  .sw-label input{position:absolute;opacity:0;width:0;height:0;}
-  .sw-track{
-    width:46px;height:26px;
-    background:var(--btn-border);
-    border-radius:13px;
-    position:relative;
-    transition:background 0.2s;
-    flex-shrink:0;
-  }
-  .sw-label input:checked ~ .sw-track{background:var(--blue);}
-  .sw-thumb{
-    position:absolute;
-    top:3px;left:3px;
-    width:20px;height:20px;
-    background:#fff;
-    border-radius:50%;
-    transition:transform 0.2s;
-    box-shadow:0 1px 4px rgba(0,0,0,.35);
-  }
-  .sw-label input:checked ~ .sw-track .sw-thumb{transform:translateX(20px);}
-  .sw-label:focus-within .sw-track{outline:2px solid var(--focus);outline-offset:2px;}
-</style>
+<title>Trivia Host Timer v2.3</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
@@ -422,61 +52,67 @@
 
   <!-- ============ TIMER ZONES ============ -->
   <div id="timers">
+   <div id="layout">
 
-    <hr class="div">
-
-    <!-- ROUND TIMER -->
-    <section id="zoneRound">
-      <div class="timepair">
-        <div class="tcol">
-          <div class="tlabel">Current Round</div>
-          <div class="bigtime" id="roundTime">00:00</div>
-        </div>
-        <div class="tcol">
-          <div class="tlabel">Session</div>
-          <div class="bigtime sess" id="gameTime">00:00</div>
-        </div>
-      </div>
-      <div class="grid2">
-        <button class="primary" id="runBtn">Start</button>
-        <button id="stopBtn">End Round &amp; Log</button>
-      </div>
-      <button id="resetBtn" style="width:100%;margin-top:6px;">Reset</button>
-    </section>
-
-    <hr class="div">
-
-    <!-- QUESTION COUNTDOWN -->
-    <section id="zoneQuestion">
-      <p class="zlabel">Question Countdown</p>
-      <div class="midtime qtime" id="qTime">03:00</div>
-      <div class="crow q">
-        <button class="toggle" id="qToggle">5:00</button>
-        <input type="number" id="qMin" min="1" max="5" step="1" value="3" aria-label="Question minutes">
-        <button class="primary" id="qStart">Start</button>
-        <button id="qReset">Reset</button>
-      </div>
-    </section>
-
-    <!-- BREAK TIMER -->
-    <section id="zoneBreak">
+    <div id="colMain">
       <hr class="div">
-      <p class="zlabel">Break Timer</p>
-      <div class="midtime" id="bTime">10:00</div>
-      <div class="crow b">
-        <input type="number" id="bMin" min="1" max="60" step="1" value="10" aria-label="Break minutes">
-        <button class="primary" id="bStart">Start Break</button>
-        <button id="bReset">Reset</button>
-      </div>
-    </section>
 
-    <hr class="div">
+      <!-- ROUND TIMER -->
+      <section id="zoneRound">
+        <div class="timepair">
+          <div class="tcol">
+            <div class="tlabel">Current Round</div>
+            <div class="bigtime" id="roundTime">00:00</div>
+          </div>
+          <div class="tcol">
+            <div class="tlabel">Session</div>
+            <div class="bigtime sess" id="gameTime">00:00</div>
+          </div>
+        </div>
+        <div class="grid2">
+          <button class="primary" id="runBtn">Start</button>
+          <button id="stopBtn">End Round &amp; Log</button>
+        </div>
+        <button id="resetBtn" style="width:100%;margin-top:6px;">Reset</button>
+      </section>
+
+      <hr class="div">
+
+      <!-- QUESTION COUNTDOWN -->
+      <section id="zoneQuestion">
+        <p class="zlabel">Question Countdown</p>
+        <div class="midtime qtime" id="qTime">03:00</div>
+        <div class="crow q">
+          <button class="toggle" id="qToggle">5:00</button>
+          <input type="number" id="qMin" min="1" max="5" step="1" value="3" aria-label="Question minutes">
+          <button class="primary" id="qStart">Start</button>
+          <button id="qReset">Reset</button>
+        </div>
+      </section>
+
+      <!-- BREAK TIMER -->
+      <section id="zoneBreak">
+        <hr class="div">
+        <p class="zlabel">Break Timer</p>
+        <div class="midtime" id="bTime">10:00</div>
+        <div class="crow b">
+          <input type="number" id="bMin" min="1" max="60" step="1" value="10" aria-label="Break minutes">
+          <button class="primary" id="bStart">Start Break</button>
+          <button id="bReset">Reset</button>
+        </div>
+      </section>
+    </div>
 
     <!-- ROUND LOG -->
-    <section>
-      <p class="zlabel">Round Log</p>
-      <div class="logwrap" id="log"></div>
-    </section>
+    <div id="colLog">
+      <hr class="div">
+      <section>
+        <p class="zlabel">Round Log</p>
+        <div class="logwrap" id="log"></div>
+      </section>
+    </div>
+
+   </div>
   </div>
 
   <!-- ============ SUMMARY PANEL ============ -->
@@ -508,6 +144,17 @@
       </label>
     </div>
 
+    <div class="setrow">
+      <div>
+        <div class="setlabel">Color-blind palette</div>
+        <div class="setsub" id="cbSub">Off</div>
+      </div>
+      <label class="sw-label" aria-label="Toggle color-blind friendly palette">
+        <input type="checkbox" id="cbToggle">
+        <span class="sw-track"><span class="sw-thumb"></span></span>
+      </label>
+    </div>
+
     <div class="setrow col">
       <div class="setlabel">Text size <small id="fsVal">100%</small></div>
       <input type="range" id="fsRange" min="0.8" max="1.4" step="0.05" value="1" aria-label="Text size">
@@ -515,505 +162,30 @@
       <button id="fsReset">Reset text size</button>
     </div>
 
-    <div class="setver">Trivia Host Timer v2.1</div>
+    <div class="setver">Trivia Host Timer v2.3</div>
   </div>
 </div>
 
-<script>
-"use strict";
+<!-- ============ ROUND DETAIL MODAL ============
+     On phone widths the log column is too narrow for the notes field, so
+     tapping a logged round opens this instead. -->
+<div class="modal-back" id="roundBack" role="dialog" aria-modal="true" aria-label="Round details">
+  <div class="modal">
+    <div class="modalhead">
+      <span class="modaltitle" id="roundModalTitle">Round</span>
+      <button class="iconbtn" id="roundClose" aria-label="Close round details">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="sumtotal" id="roundModalTime">00:00</div>
+    <div style="text-align:center;margin:2px 0 14px;"><span class="badge" id="roundModalBadge"></span></div>
+    <textarea id="roundModalNotes" placeholder="notes (e.g. beer round)…" aria-label="Round notes"></textarea>
+  </div>
+</div>
 
-/* ---------- constants (seconds) ---------- */
-var BLUE_AT   = 900;    // 15:00 -> blue
-var GREEN_AT  = 1200;   // 20:00 -> green / on-pace floor
-var YELLOW_AT = 1800;   // 30:00 -> yellow / on-pace ceiling
-var PACE_LOW  = 1200;   // under 20:00 = Too Fast
-var PACE_HIGH = 1800;   // over 30:00 = Too Slow
-var TOTAL_ROUNDS = 4;
-var LS_KEY = "triviaHostTimer.v1";
-var SET_KEY = "triviaHostTimer.settings.v1";
-
-/* ---------- persisted state ----------
-   Two independent clocks share one run/pause state:
-     • round  -> resets to 0 on Stop & Log
-     • game   -> the session clock; keeps running across logs            */
-var state = {
-  displayedRound: 1,
-  roundLog: [],          // {round, sec, pace, notes}
-  timerState: "idle",    // idle | running | paused  (drives BOTH clocks)
-  roundAccumMs: 0,
-  roundAnchor: 0,        // epoch ms when round clock last set running
-  gameAccumMs: 0,
-  gameAnchor: 0,         // epoch ms when game clock last set running
-  gameComplete: false
-};
-var showSummary = false;
-
-/* ---------- settings (persisted separately) ---------- */
-var settings = { light:false, fs:1 };
-
-/* ---------- transient (not persisted) ---------- */
-var qDurationSec = 180;
-var qEndEpoch = 0;
-var qRemainMs = 0;       // when paused: ms remaining (negative once overflowing)
-var qState = "idle";     // idle | running | paused
-
-var bDurationSec = 600;
-var bEndEpoch = 0;
-var bState = "idle";     // idle | running
-
-/* ---------- element refs ---------- */
-function $(id){ return document.getElementById(id); }
-var el = {
-  gameTime:$("gameTime"),
-  summaryBtn:$("summaryBtn"), clearBtn:$("clearBtn"),
-  timers:$("timers"), summary:$("summary"),
-  roundTime:$("roundTime"), runBtn:$("runBtn"), stopBtn:$("stopBtn"),
-  resetBtn:$("resetBtn"),
-  zoneBreak:$("zoneBreak"),
-  qTime:$("qTime"), qToggle:$("qToggle"), qMin:$("qMin"),
-  qStart:$("qStart"), qReset:$("qReset"),
-  bTime:$("bTime"), bMin:$("bMin"), bStart:$("bStart"), bReset:$("bReset"),
-  log:$("log"),
-  // settings
-  gear:$("gear"), settingsBack:$("settingsBack"), settingsClose:$("settingsClose"),
-  themeToggle:$("themeToggle"), themeSub:$("themeSub"),
-  fsRange:$("fsRange"), fsVal:$("fsVal"), fsReset:$("fsReset")
-};
-
-/* ---------- helpers ---------- */
-function fmt(totalSec){
-  totalSec = Math.max(0, Math.floor(totalSec));
-  var m = Math.floor(totalSec/60), s = totalSec%60;
-  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
-}
-function elapsedRoundMs(){
-  return state.roundAccumMs +
-    (state.timerState==="running" ? (Date.now()-state.roundAnchor) : 0);
-}
-function elapsedGameMs(){
-  return state.gameAccumMs +
-    (state.timerState==="running" ? (Date.now()-state.gameAnchor) : 0);
-}
-function roundColorClass(sec){
-  if(sec>=YELLOW_AT) return "t-yellow";
-  if(sec>=GREEN_AT)  return "t-green";
-  if(sec>=BLUE_AT)   return "t-blue";
-  return "";
-}
-function paceFor(sec){
-  if(sec < PACE_LOW)  return "fast";
-  if(sec > PACE_HIGH) return "slow";
-  return "on";
-}
-var BADGE = {
-  on:  {t:"On Pace",  c:"b-on",  e:"\uD83D\uDFE2"},   // green circle
-  fast:{t:"Too Fast", c:"b-fast",e:"\uD83D\uDD34"},   // red circle
-  slow:{t:"Too Slow", c:"b-slow",e:"\uD83D\uDFE1"}    // yellow circle
-};
-function totalLoggedSec(){
-  var t=0; for(var i=0;i<state.roundLog.length;i++) t+=state.roundLog[i].sec; return t;
-}
-function escapeHtml(s){
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-
-/* ---------- persistence ---------- */
-function save(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
-}
-function load(){
-  try{
-    var raw = localStorage.getItem(LS_KEY);
-    if(!raw) return;
-    var s = JSON.parse(raw);
-    if(s && typeof s==="object"){
-      state.displayedRound = s.displayedRound || 1;
-      state.roundLog = Array.isArray(s.roundLog) ? s.roundLog : [];
-      // accept old "roundState" key for backward compatibility
-      state.timerState = s.timerState || s.roundState || "idle";
-      state.roundAccumMs = s.roundAccumMs || 0;
-      state.roundAnchor = s.roundAnchor || 0;
-      state.gameAccumMs = s.gameAccumMs || 0;
-      state.gameAnchor = s.gameAnchor || 0;
-      state.gameComplete = !!s.gameComplete;
-      // A timer running at save time keeps ticking via its epoch anchors.
-      if(state.timerState==="running" && (!state.roundAnchor || !state.gameAnchor)){
-        state.timerState="paused";
-      }
-    }
-  }catch(e){}
-}
-
-/* ============ SETTINGS ============ */
-function applyTheme(light){
-  document.body.classList.toggle("light", !!light);
-  el.themeToggle.checked = !!light;
-  el.themeSub.textContent = light ? "Light mode" : "Dark mode";
-}
-function applyFs(fs){
-  fs = Math.min(1.4, Math.max(0.8, fs || 1));
-  document.documentElement.style.setProperty("--fs", String(fs));
-  el.fsRange.value = String(fs);
-  el.fsVal.textContent = Math.round(fs*100) + "%";
-  return fs;
-}
-function saveSettings(){
-  try{ localStorage.setItem(SET_KEY, JSON.stringify(settings)); }catch(e){}
-}
-function loadSettings(){
-  try{
-    var raw = localStorage.getItem(SET_KEY);
-    if(raw){
-      var s = JSON.parse(raw);
-      if(s && typeof s==="object"){
-        settings.light = !!s.light;
-        settings.fs = (typeof s.fs==="number") ? s.fs : 1;
-      }
-    }
-  }catch(e){}
-  applyTheme(settings.light);
-  settings.fs = applyFs(settings.fs);
-}
-function openSettings(){ el.settingsBack.classList.add("open"); }
-function closeSettings(){ el.settingsBack.classList.remove("open"); }
-
-/* ============ ROUND + SESSION TIMERS ============
-   One run/pause control drives both clocks together.                    */
-function toggleRun(){
-  var now = Date.now();
-  if(state.timerState==="running"){            // running -> pause both
-    state.roundAccumMs += now - state.roundAnchor;
-    state.gameAccumMs  += now - state.gameAnchor;
-    state.timerState="paused";
-  } else {                                      // idle/paused -> run both
-    state.roundAnchor = now;
-    state.gameAnchor  = now;
-    state.timerState="running";
-  }
-  save(); renderStructure();
-}
-// Stop & Log: record the current round, reset ONLY the round clock.
-// The session (game) clock is never touched here — it keeps running.
-function stopLog(){
-  var ms = elapsedRoundMs();
-  if(ms < 1000) return; // nothing meaningful to log
-  var sec = Math.round(ms/1000);
-  state.roundLog.push({
-    round: state.displayedRound,
-    sec: sec,
-    pace: paceFor(sec),
-    notes: ""
-  });
-  // reset the round clock only; if we're running, it restarts ticking now
-  state.roundAccumMs = 0;
-  state.roundAnchor = (state.timerState==="running") ? Date.now() : 0;
-  resetQuestion(); resetBreak();
-  if(state.roundLog.length >= TOTAL_ROUNDS){
-    state.gameComplete=true;
-    showSummary=true;
-  } else {
-    state.displayedRound = Math.min(TOTAL_ROUNDS, state.displayedRound+1);
-  }
-  save(); renderStructure();
-}
-// Reset: scrap the current round's time and start it over at 00:00.
-// The session clock keeps going (the time really did elapse).
-function resetRound(){
-  state.roundAccumMs = 0;
-  state.roundAnchor = (state.timerState==="running") ? Date.now() : 0;
-  save(); renderStructure();
-}
-
-/* ============ QUESTION COUNTDOWN ============ */
-/* States the display can be in:
-     "normal" -> plain number, no background
-     "warn"   -> 1:00 or less remaining: solid number, pulsing YELLOW background
-     "over"   -> time's up & overflowing into negative: solid number, pulsing RED background */
-function setQClass(phase){
-  el.qTime.className = "midtime qtime" +
-    (phase==="warn" ? " warn" :
-     phase==="over" ? " over" : "");
-}
-// reflect running/paused state on the question Start + Reset buttons
-function renderQuestionControls(){
-  el.qStart.textContent =
-    qState==="running" ? "Pause" :
-    qState==="paused"  ? "Resume" : "Start";
-  el.qStart.classList.toggle("primary",   qState !== "running");
-  el.qStart.classList.toggle("btn-pause", qState === "running");
-
-  var active = qState !== "idle";
-  el.qReset.disabled = !active;
-  el.qReset.classList.toggle("btn-reset-active", active);
-}
-function toggleQuestion(){
-  if(qState==="idle"){
-    qEndEpoch = Date.now() + qDurationSec*1000;
-    qState="running";
-  } else if(qState==="paused"){
-    qEndEpoch = Date.now() + qRemainMs;
-    qState="running";
-  } else { // running -> pause
-    qRemainMs = qEndEpoch - Date.now();
-    qState="paused";
-  }
-  renderQuestionControls();
-}
-function resetQuestion(){
-  qState="idle"; qEndEpoch=0; qRemainMs=0;
-  setQClass("normal");
-  el.qTime.textContent = fmt(qDurationSec);
-  renderQuestionControls();
-}
-function setQDuration(sec){
-  sec = Math.min(300, Math.max(60, sec));
-  qDurationSec = sec;
-  el.qMin.value = Math.round(sec/60);
-  el.qToggle.textContent = (sec===180) ? "5:00" : "3:00"; // toggles to the other preset
-  resetQuestion();
-}
-function toggleQuestionPreset(){
-  setQDuration(qDurationSec===180 ? 300 : 180);
-}
-
-/* ============ BREAK TIMER ============ */
-function startBreak(){
-  if(bState==="running") return;
-  bEndEpoch = Date.now() + bDurationSec*1000;
-  bState="running";
-}
-function resetBreak(){
-  bState="idle"; bEndEpoch=0;
-  el.bTime.textContent = fmt(bDurationSec);
-}
-function setBreakDuration(min){
-  min = Math.min(60, Math.max(1, min));
-  bDurationSec = min*60;
-  el.bMin.value = min;
-  resetBreak();
-}
-
-/* ============ CLEAR SESSION ============ */
-function clearSession(){
-  if(!confirm("Clear all rounds and start a new game night?")) return;
-  state = {
-    displayedRound:1, roundLog:[],
-    timerState:"idle", roundAccumMs:0, roundAnchor:0,
-    gameAccumMs:0, gameAnchor:0, gameComplete:false
-  };
-  showSummary=false;
-  resetQuestion(); resetBreak();
-  try{ localStorage.removeItem(LS_KEY); }catch(e){}
-  renderStructure();
-}
-
-/* ============ RENDER ============ */
-// renderStructure(): visibility, labels, log, summary — on events only.
-function renderStructure(){
-  var summaryView = state.gameComplete || showSummary;
-
-  el.timers.style.display = summaryView ? "none" : "";
-  el.summary.style.display = summaryView ? "block" : "none";
-  el.summaryBtn.textContent = (showSummary && !state.gameComplete) ? "Back to Timers" : "Summary";
-
-  // run button label + color reflects state (drives both clocks)
-  el.runBtn.textContent =
-    state.timerState==="running" ? "Pause" :
-    state.timerState==="paused"  ? "Resume" : "Start";
-  el.runBtn.classList.toggle("primary",   state.timerState !== "running");
-  el.runBtn.classList.toggle("btn-pause", state.timerState === "running");
-
-  // stop/reset only meaningful with elapsed round time
-  var hasTime = elapsedRoundMs() >= 1000;
-  el.stopBtn.disabled = !hasTime;
-  // reset is disabled at initial 00:00, red when there's time to clear
-  el.resetBtn.disabled = !hasTime;
-  el.resetBtn.classList.toggle("btn-reset-active", hasTime);
-
-  if(summaryView) buildSummary(); else buildLog();
-}
-
-function buildLog(){
-  var L = state.roundLog;
-  if(L.length===0){
-    el.log.innerHTML = '<div class="empty">No rounds logged yet.</div>';
-    return;
-  }
-  var html="";
-  for(var i=0;i<L.length;i++){
-    var e=L[i], b=BADGE[e.pace];
-    html +=
-      '<div class="logitem">'+
-        '<div class="logline">'+
-          '<span class="r">R'+e.round+'</span>'+
-          '<span class="tm">'+fmt(e.sec)+'</span>'+
-          '<span class="badge '+b.c+'">'+b.e+' '+b.t+'</span>'+
-        '</div>'+
-        '<input type="text" data-i="'+i+'" placeholder="notes (e.g. beer round)\u2026" '+
-          'value="'+escapeHtml(e.notes)+'">'+
-      '</div>';
-  }
-  el.log.innerHTML = html;
-}
-
-function buildSummary(){
-  var L = state.roundLog;
-  var n = L.length;
-  var total = totalLoggedSec();
-  var onPace = 0;
-  for(var i=0;i<n;i++) if(L[i].pace==="on") onPace++;
-  var avg = n ? Math.round(total/n) : 0;
-
-  var verdict;
-  if(n===0) verdict="No rounds logged yet.";
-  else if(onPace===n) verdict="All "+n+" rounds on pace \u2014 great night!";
-  else if(onPace>=n-1) verdict=onPace+" of "+n+" rounds on pace \u2014 good night.";
-  else if(onPace>=Math.ceil(n/2)) verdict=onPace+" of "+n+" rounds on pace \u2014 decent night.";
-  else verdict=onPace+" of "+n+" rounds on pace \u2014 watch your pacing.";
-
-  var rows="";
-  for(i=0;i<n;i++){
-    var e=L[i], b=BADGE[e.pace];
-    rows +=
-      '<div class="sumrow">'+
-        '<span class="r">R'+e.round+'</span>'+
-        '<span class="tm">'+fmt(e.sec)+'</span>'+
-        '<span class="badge '+b.c+'">'+b.e+' '+b.t+'</span>'+
-      '</div>';
-  }
-
-  var foot = state.gameComplete
-    ? '<button class="danger" id="newGameBtn" style="width:100%;margin-top:12px;">Start New Game</button>'
-    : '<button id="backBtn" style="width:100%;margin-top:12px;">Back to Timers</button>'+
-      '<div class="sumnote">Game in progress \u2014 summary so far.</div>';
-
-  el.summary.innerHTML =
-    '<div class="sumhead">'+(state.gameComplete?"Game Complete":"Session Summary")+'</div>'+
-    '<div class="sumtotal">'+fmt(total)+'<small>Total Game Time</small></div>'+
-    (n? rows : '<div class="empty">No rounds logged yet.</div>')+
-    (n? '<div class="sumavg"><span>Average round</span><b>'+fmt(avg)+'</b></div>' : '')+
-    '<div class="verdict">'+verdict+'</div>'+
-    foot;
-
-  var ng=$("newGameBtn"); if(ng) ng.onclick=clearSession;
-  var bk=$("backBtn"); if(bk) bk.onclick=function(){ showSummary=false; renderStructure(); };
-}
-
-// tick(): lightweight numeric refresh, runs continuously.
-function tick(){
-  var rSec = elapsedRoundMs()/1000;
-  el.roundTime.textContent = fmt(rSec);
-  // keep the .sess sizing/colour classes off the round timer; pace colour only
-  el.roundTime.className = "bigtime " + roundColorClass(rSec);
-  // session clock: keeps running across logs
-  el.gameTime.textContent = fmt(elapsedGameMs()/1000);
-
-  // toggle stop/reset enabled as time crosses 1s (cheap)
-  var hasTime = rSec >= 1;
-  if(el.stopBtn.disabled === hasTime) el.stopBtn.disabled = !hasTime;
-  if(el.resetBtn.disabled === hasTime){
-    el.resetBtn.disabled = !hasTime;
-    el.resetBtn.classList.toggle("btn-reset-active", hasTime);
-  }
-
-  if(qState==="running" || qState==="paused"){
-    var qrem = (qState==="running")
-      ? Math.ceil((qEndEpoch - Date.now())/1000)
-      : Math.ceil(qRemainMs/1000);
-    if(qrem > 60){
-      // plenty of time left
-      el.qTime.textContent = fmt(qrem);
-      setQClass("normal");
-    } else if(qrem > 0){
-      // one-minute warning -> pulsing yellow background
-      el.qTime.textContent = fmt(qrem);
-      setQClass("warn");
-    } else {
-      // time's up: keep counting into the negative (host is slow sometimes!)
-      el.qTime.textContent = (qrem===0 ? "" : "-") + fmt(-qrem);
-      setQClass("over");
-    }
-  }
-  if(bState==="running"){
-    var brem = Math.ceil((bEndEpoch - Date.now())/1000);
-    if(brem<=0){ bState="idle"; bEndEpoch=0; el.bTime.textContent = fmt(0); }
-    else el.bTime.textContent = fmt(brem);
-  }
-}
-
-/* ============ WAKE LOCK ============ */
-var wakeLock = null;
-function requestWakeLock(){
-  if(!("wakeLock" in navigator)) return;
-  navigator.wakeLock.request("screen").then(function(lock){
-    wakeLock = lock;
-    lock.addEventListener("release", function(){ wakeLock=null; });
-  }).catch(function(){ /* silent — e.g. tab not visible */ });
-}
-document.addEventListener("visibilitychange", function(){
-  if(wakeLock===null && document.visibilityState==="visible") requestWakeLock();
-});
-
-/* ============ WIRE UP ============ */
-el.runBtn.onclick   = toggleRun;
-el.stopBtn.onclick  = stopLog;
-el.resetBtn.onclick = resetRound;
-el.summaryBtn.onclick = function(){ showSummary=!showSummary; renderStructure(); };
-el.clearBtn.onclick = clearSession;
-
-el.qStart.onclick = toggleQuestion;
-el.qReset.onclick = resetQuestion;
-el.qToggle.onclick= toggleQuestionPreset;
-el.qMin.onchange  = function(){ setQDuration((parseInt(el.qMin.value,10)||3)*60); };
-
-el.bStart.onclick = startBreak;
-el.bReset.onclick = resetBreak;
-el.bMin.onchange  = function(){ setBreakDuration(parseInt(el.bMin.value,10)||10); };
-
-// settings
-el.gear.onclick = openSettings;
-el.settingsClose.onclick = closeSettings;
-el.settingsBack.addEventListener("click", function(ev){
-  if(ev.target===el.settingsBack) closeSettings();   // click outside the card
-});
-document.addEventListener("keydown", function(ev){
-  if(ev.key==="Escape") closeSettings();
-});
-el.themeToggle.onchange = function(){
-  settings.light = el.themeToggle.checked;
-  applyTheme(settings.light);
-  saveSettings();
-};
-el.fsRange.oninput = function(){
-  settings.fs = applyFs(parseFloat(el.fsRange.value));
-  saveSettings();
-};
-el.fsReset.onclick = function(){
-  settings.fs = applyFs(1);
-  saveSettings();
-};
-
-// notes editing via delegation (keeps input focus, no rebuild)
-el.log.addEventListener("input", function(ev){
-  var t = ev.target;
-  if(t && t.tagName==="INPUT" && t.dataset.i!=null){
-    var i = parseInt(t.dataset.i,10);
-    if(state.roundLog[i]){ state.roundLog[i].notes = t.value; save(); }
-  }
-});
-
-/* ============ INIT ============ */
-loadSettings();
-load();
-el.qMin.value = Math.round(qDurationSec/60);
-el.qToggle.textContent = (qDurationSec===180) ? "5:00" : "3:00";
-resetQuestion();
-resetBreak();
-renderStructure();
-requestWakeLock();
-setInterval(tick, 200);
-tick();
-</script>
+<script src="app.js" defer></script>
 </body>
 </html>
