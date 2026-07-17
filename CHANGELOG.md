@@ -3,6 +3,15 @@
 All notable changes to Trivia Host Timer are documented in this file.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## v2.6 — 2026-07-17
+
+### Added
+- Custom favicon (stopwatch + question mark) instead of the browser default.
+
+### Changed
+- Page title no longer carries the version number; the version now lives
+  in the Settings panel, alongside a "built with Claude AI" credit.
+
 ## v2.5 — 2026-07-17
 
 ### Changed

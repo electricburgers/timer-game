@@ -1,0 +1,9 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <rect width="24" height="24" rx="6" fill="#0c0e11"/>
+  <g fill="none" stroke="#34a4f4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="10" y1="2" x2="14" y2="2"/>
+    <circle cx="12" cy="14" r="8"/>
+  </g>
+  <text x="12" y="18" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700"
+        text-anchor="middle" fill="#34a4f4">?</text>
+</svg>
