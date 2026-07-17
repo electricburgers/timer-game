@@ -3,6 +3,12 @@
 All notable changes to Trivia Host Timer are documented in this file.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## v2.5 — 2026-07-17
+
+### Changed
+- Current Round now stacks above Session (each with its own label and
+  timer) at narrow phone widths, instead of squeezing side by side.
+
 ## v2.4 — 2026-07-17
 
 ### Changed

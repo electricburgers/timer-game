@@ -162,6 +162,12 @@
      column can actually hold (30cqw ≈ what "00:00" needs at this weight). */
   .timepair .bigtime{font-size:min(calc(36px * var(--fs)), 30cqw);margin:0;}
   .timepair .bigtime.sess{color:var(--muted);}
+  /* Phone-narrow: Current Round and Session no longer fit side by side
+     without squeezing the digits unreadably small, so stack Session
+     below Current Round instead. */
+  @media (max-width:600px){
+    .timepair{grid-template-columns:1fr;align-items:stretch;gap:2px;}
+  }
   .toplinks{
     display:flex;gap:6px;flex:1;justify-content:flex-end;
     min-width:0;
