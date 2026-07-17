@@ -195,13 +195,21 @@
   }
 
   /* ---- generic buttons / inputs ---- */
+  /* Every button's label (and so its padding-driven width) tracks its
+     nearest sized container — same min()-against-cqw trick as
+     .bigtime/.midtime — so labels shrink smoothly as that container
+     narrows instead of overflowing or forcing the button wider than
+     the space actually available. Buttons with no sized container
+     ancestor (header, modals) fall back to the viewport, which is
+     wide enough that this is a no-op there except on absurdly narrow
+     screens. */
   button{
     background:var(--btn);
     color:var(--text);
     border:1px solid var(--btn-border);
     border-radius:5px;
     min-height:38px;
-    font-size:calc(13px * var(--fs));font-weight:600;
+    font-size:min(calc(13px * var(--fs)), 6cqw);font-weight:600;
     cursor:pointer;
     padding:6px 8px;
     -webkit-tap-highlight-color:transparent;
@@ -285,12 +293,10 @@
   .bigtime.t-green{color:var(--green);}
   .bigtime.t-yellow{color:var(--yellow);}
 
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-  /* Start / End Round & Log stack instead of squeezing side-by-side once
-     the timer column has shrunk down to make room for the log column. */
-  @media (max-width:600px){
-    .grid2{grid-template-columns:1fr;}
-  }
+  /* Start only ever claims what its own (shrinking, see #runBtn below)
+     label needs; End Round & Log takes whatever's left. Keeps both
+     side-by-side at every width instead of stacking on narrow phones. */
+  .grid2{display:grid;grid-template-columns:auto 1fr;gap:6px;}
 
   /* ---- question + break displays ---- */
   .midtime{

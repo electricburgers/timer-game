@@ -3,6 +3,22 @@
 All notable changes to Trivia Host Timer are documented in this file.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## v2.8 — 2026-07-17
+
+### Changed
+- Every button's label font now sizes itself off its nearest sized
+  container (the same min()-against-cqw approach the timer digits already
+  used), not just Start/Pause/Resume — so all buttons shrink smoothly
+  instead of overflowing once their container gets narrow.
+
+## v2.7 — 2026-07-17
+
+### Changed
+- Start/Pause/Resume now sizes itself to its own label (auto-width) instead
+  of splitting the row 50/50 with End Round & Log, and its font shrinks
+  with the timer column's width — so it stays compact and readable
+  instead of stacking full-width once the window gets phone-narrow.
+
 ## v2.6 — 2026-07-17
 
 ### Added
