@@ -3,6 +3,12 @@
 All notable changes to Trivia Host Timer are documented in this file.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## v2.4 — 2026-07-17
+
+### Changed
+- Header row now combines the title, Summary/Clear Session links, and
+  settings gear onto a single line to save vertical space.
+
 ## v2.3 — 2026-07-13
 
 ### Added

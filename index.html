@@ -3,7 +3,7 @@
   ============================================================================
   TRIVIA HOST TIMER  —  no build tools, no dependencies.
   Built for Chicago Style Trivia (Revolution Entertainment) hosting.
-  v2.3
+  v2.4
 
   Three files: index.html (structure), style.css, app.js. Keep all three
   together in the repo root.
@@ -28,7 +28,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Trivia Host Timer v2.3</title>
+<title>Trivia Host Timer v2.4</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,6 +37,10 @@
   <!-- ============ HEADER ============ -->
   <header>
     <div class="apptitle">Trivia Timer</div>
+    <div class="toplinks">
+      <button class="linkbtn" id="summaryBtn">Summary</button>
+      <button class="linkbtn" id="clearBtn">Clear Session</button>
+    </div>
     <button class="iconbtn" id="gear" aria-label="Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -45,10 +49,6 @@
       </svg>
     </button>
   </header>
-  <div class="toplinks">
-    <button class="linkbtn" id="summaryBtn">Summary</button>
-    <button class="linkbtn" id="clearBtn">Clear Session</button>
-  </div>
 
   <!-- ============ TIMER ZONES ============ -->
   <div id="timers">
@@ -162,7 +162,7 @@
       <button id="fsReset">Reset text size</button>
     </div>
 
-    <div class="setver">Trivia Host Timer v2.3</div>
+    <div class="setver">Trivia Host Timer v2.4</div>
   </div>
 </div>
 

@@ -163,11 +163,11 @@
   .timepair .bigtime{font-size:min(calc(36px * var(--fs)), 30cqw);margin:0;}
   .timepair .bigtime.sess{color:var(--muted);}
   .toplinks{
-    display:flex;justify-content:flex-end;gap:6px;
-    margin-top:6px;
+    display:flex;gap:6px;flex:1;justify-content:flex-end;
+    min-width:0;
   }
   .linkbtn{
-    min-height:30px;padding:3px 10px;
+    min-height:30px;padding:3px 10px;white-space:nowrap;
     font-size:calc(11.5px * var(--fs));color:var(--muted);
     background:transparent;border:1px solid var(--btn-border);
   }
