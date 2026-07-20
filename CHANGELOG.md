@@ -3,6 +3,25 @@
 All notable changes to Trivia Host Timer are documented in this file.
 Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## v2.10 — 2026-07-18
+
+### Fixed
+- iOS caches the home-screen icon and manifest by URL, so re-installing
+  the PWA after changing the icon files kept showing the old (missing)
+  icon. Icon/manifest links now carry a `?v=` query tied to the app
+  version, forcing iOS to refetch them on each release. Also added the
+  recommended `sizes="180x180"` on the apple-touch-icon link.
+
+## v2.9 — 2026-07-18
+
+### Fixed
+- Header no longer overlaps Summary/Clear Session/gear on phone-narrow
+  screens (or with text size maxed out). `.toplinks` was using `flex:1`
+  (a 0 flex-basis), which hid its real content width from the wrap
+  algorithm — the header never wrapped, and the buttons just spilled
+  left over the title. Header now wraps, and `.toplinks` uses
+  `flex:1 1 auto` so wrapping accounts for its actual content size.
+
 ## v2.8 — 2026-07-17
 
 ### Changed

@@ -135,11 +135,17 @@
   }
 
   /* ---- header ---- */
+  /* Title + Summary/Clear Session + gear all fit on one line down to
+     tablet width, but their combined natural widths don't shrink enough
+     on a phone-narrow screen to avoid colliding — wrap lets the link
+     buttons drop to their own row (still right-aligned via .toplinks'
+     own flex:1) instead of overlapping the title. */
   header{
     display:flex;
+    flex-wrap:wrap;
     align-items:center;
     justify-content:space-between;
-    gap:8px;
+    gap:6px 8px;
   }
   .apptitle{
     font-size:calc(16px * var(--fs));font-weight:700;letter-spacing:.2px;
@@ -169,7 +175,7 @@
     .timepair{grid-template-columns:1fr;align-items:stretch;gap:2px;}
   }
   .toplinks{
-    display:flex;gap:6px;flex:1;justify-content:flex-end;
+    display:flex;gap:6px;flex:1 1 auto;justify-content:flex-end;
     min-width:0;
   }
   .linkbtn{

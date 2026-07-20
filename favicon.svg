@@ -3,7 +3,9 @@
   <g fill="none" stroke="#34a4f4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <line x1="10" y1="2" x2="14" y2="2"/>
     <circle cx="12" cy="14" r="8"/>
+    <g transform="translate(12,14) scale(0.8) translate(-12,-12)">
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </g>
   </g>
-  <text x="12" y="18" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700"
-        text-anchor="middle" fill="#34a4f4">?</text>
 </svg>
